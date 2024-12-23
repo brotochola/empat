@@ -14,6 +14,9 @@ export class Fish extends Phaser.GameObjects.Sprite {
   fishOfMyTypeICanSee: Fish[] = [];
   scene: Game;
   time: number;
+  bgFish: boolean;
+  limitX: number;
+  limitY: number;
 
   constructor(
     scene: Game,
@@ -21,7 +24,8 @@ export class Fish extends Phaser.GameObjects.Sprite {
     y: number,
     tilesetKey: string,
     tileIndex: number,
-    grid: SpatialHash<Fish>
+    grid: SpatialHash<Fish>,
+    container: Phaser.GameObjects.Container | null
   ) {
     super(scene, x, y, tilesetKey, tileIndex);
     this.grid = grid;
@@ -29,18 +33,29 @@ export class Fish extends Phaser.GameObjects.Sprite {
 
     this.fishType = tileIndex;
 
-    scene.add.existing(this);
-
-    this.resetFrame()
-  
-    // this.frame.setCutPosition(this.frame.cutX, this.frame.cutY + 1);
+    this.resetFrame();
+    if (container) {
+      //IT'S A BACKGROUND FISH
+      this.bgFish = true;
+      this.tint = 0x000055;
+      container.add(this);
+      this.limitX = this.scene.worldWidth * 2;
+      this.limitY = (this.scene.worldHeight - 500) * 2;
+    } else {
+      //IT'S AN INTERACTIVE FISH
+      scene.add.existing(this);
+      this.limitX = this.scene.worldWidth;
+      this.limitY = this.scene.worldHeight - 300;
+      this.on("pointerdown", (e: Event) => {
+        console.log(e);
+      });
+    }
   }
-  resetFrame(){
-    let frame=this.frame.clone()
-    frame.setCutSize(64,63)
-    frame.setCutPosition(frame.cutX, frame.cutY+1)
-    this.setFrame(frame)
-
+  resetFrame() {
+    let frame = this.frame.clone();
+    frame.setCutSize(64, 63);
+    frame.setCutPosition(frame.cutX, frame.cutY + 1);
+    this.setFrame(frame);
   }
 
   applyForce(force: Phaser.Math.Vector2): void {
@@ -81,7 +96,7 @@ export class Fish extends Phaser.GameObjects.Sprite {
 
   separation() {
     if (!this.fishICanTouch.length) return;
-    const strength = 0.5;
+    const strength = 0.33;
     const steer = new Phaser.Math.Vector2(0, 0);
 
     for (const other of this.fishICanTouch) {
@@ -107,17 +122,23 @@ export class Fish extends Phaser.GameObjects.Sprite {
   }
 
   getFishCloseToMe() {
-    this.fishICanTouch = this.grid.query(this.x, this.y, 10);
-    this.fishICanSee = this.grid.query(this.x, this.y, 300);
-    this.fishOfMyTypeICanSee = this.fishICanSee.filter(
-      (k) => k.fishType == this.fishType
-    );
+    this.fishICanTouch = this.grid
+      .query(this.x, this.y, 10)
+      .filter((k) => k.bgFish == this.bgFish);
+    this.fishICanSee = this.grid
+      .query(this.x, this.y, 300)
+      .filter((k) => k.bgFish == this.bgFish);
+
+    //BACKGROUND FISH DONT CARE ABOUT FISH THEIR TYPE
+    this.fishOfMyTypeICanSee = this.bgFish
+      ? this.fishICanSee
+      : this.fishICanSee.filter((k) => k.fishType == this.fishType);
   }
 
   stayWithinBounds(minX: number, minY: number, maxX: number, maxY: number) {
     const marginX = 50;
     const marginY = 100;
-    const turnForce = 1;
+    const turnForce = 0.2;
 
     const force = new Phaser.Math.Vector2(0, 0);
 
@@ -161,12 +182,7 @@ export class Fish extends Phaser.GameObjects.Sprite {
 
     this.moveRandomly();
 
-    this.stayWithinBounds(
-      0,
-      0,
-      this.scene.worldWidth,
-      this.scene.worldHeight - 300
-    );
+    this.stayWithinBounds(0, 0, this.limitX, this.limitY);
 
     this.move();
     this.adjustAngle();

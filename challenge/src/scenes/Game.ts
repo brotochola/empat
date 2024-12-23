@@ -16,7 +16,8 @@ export class Game extends Scene {
   worldHeight: number = 1080;
   spatialHash: SpatialHash<Fish>;
   scrollX: number = 0;
-  numberOfFish: number = 130
+
+  furtherAwayFish: Phaser.GameObjects.Container;
 
   constructor() {
     super("Game");
@@ -34,8 +35,21 @@ export class Game extends Scene {
   //   }
   // }
 
-  addFishFromTheTileSet(x: number, y: number, num: number) {
-    let newFish = new Fish(this, x, y, "spritesheet", num, this.spatialHash);
+  addFishFromTheTileSet(
+    x: number,
+    y: number,
+    num: number,
+    container: Phaser.GameObjects.Container | null
+  ) {
+    let newFish = new Fish(
+      this,
+      x,
+      y,
+      "spritesheet",
+      num,
+      this.spatialHash,
+      container
+    );
 
     this.arrOfFish.push(newFish);
 
@@ -94,7 +108,6 @@ export class Game extends Scene {
     console.log("#game.create()");
 
     this.camera = this.cameras.main;
-    window["camera"] = this.camera;
 
     // this.camera.setScroll(500,0)
     this.camera.setBackgroundColor(0x000000);
@@ -110,7 +123,7 @@ export class Game extends Scene {
     });
 
     this.loadTileMap();
-    this.addABunchOfFishAtRandomPosition();
+
     // this.handleWindowResize();
     // window.onresize = () => {
     //   this.handleWindowResize();
@@ -122,8 +135,19 @@ export class Game extends Scene {
       this.worldWidth,
       this.worldHeight
     );
+
+    this.createContainerForFurtherAwayFish();
+    this.addABunchOfFishAtRandomPosition(null, 100);
+    this.addABunchOfFishAtRandomPosition(this.furtherAwayFish, 100);
   }
 
+  createContainerForFurtherAwayFish(): void {
+    this.furtherAwayFish = this.add.container();
+    this.furtherAwayFish.setScrollFactor(0.5, 1);
+    this.furtherAwayFish.setScale(0.5, 0.5);
+    // this.furtherAwayFish.blendMode=Phaser.BlendModes.DARKEN
+    this.furtherAwayFish.alpha = 0.15;
+  }
   // handleWindowResize() {
   //   const canvas = this.game.canvas;
   //   const width = window.innerWidth;
@@ -134,14 +158,18 @@ export class Game extends Scene {
   //   // this.game.scale.resize(width, height);
   // }
 
-  addABunchOfFishAtRandomPosition(): void {
+  addABunchOfFishAtRandomPosition(
+    container: Phaser.GameObjects.Container | null,
+    num: number
+  ): void {
     const fishInTileMap = [72, 74, 76, 78, 80, 100];
     const margin = 100;
-    for (let i = 0; i < this.numberOfFish; i++) {
+    for (let i = 0; i < num; i++) {
       this.addFishFromTheTileSet(
         Math.random() * this.worldWidth + margin,
         Math.random() * 600 + margin,
-        fishInTileMap[Math.floor(Math.random() * fishInTileMap.length)]
+        fishInTileMap[Math.floor(Math.random() * fishInTileMap.length)],
+        container
       );
     }
   }
