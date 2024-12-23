@@ -91,7 +91,21 @@ export class Plant extends Phaser.GameObjects.Sprite {
 
     this.dead = true;
     this.scene.arrOfPlants = this.scene.arrOfPlants.filter((k) => k != this);
-    this.destroy();
+
+    //WHEN PLANTS DIE, THEY TRANSITION TO VERY SMALL AND DARKER
+
+    this.tint = 0xffffff;
+    this.scene.tweens.add({
+      targets: this, // The object to animate
+      scale: 0.001, // Final value for the x position
+      duration: 1000, // Duration in milliseconds
+      tint: 0xaaaaff,
+      ease: "Power1", // Easing function
+      onComplete: () => {
+        this.destroy();
+      },
+      repeat: 0,
+    });
   }
 
   grow() {

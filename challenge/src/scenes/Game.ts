@@ -14,6 +14,7 @@ export class Game extends Scene {
   sandLayer2: Phaser.Tilemaps.TilemapLayer | null;
   sandLayer3: Phaser.Tilemaps.TilemapLayer | null;
   waterNoise: Phaser.GameObjects.TileSprite;
+  waterNoise2: Phaser.GameObjects.TileSprite;
   arrOfFish: Fish[] = [];
   arrOfPlants: Plant[] = [];
   worldWidth: number = 3840;
@@ -99,6 +100,8 @@ export class Game extends Scene {
 
     this.load.image("noise", "assets/noise.png");
     this.load.image("noiseSmall", "assets/noisesmall.png");
+    this.load.image("waterOverlay", "assets/overlay.png");
+
     this.load.glsl("waterShader", "assets/shader/waterShader.glsl");
 
     // this.textures.get('spritesheet').setFilter(Phaser.Textures.FilterMode.NEAREST);
@@ -156,7 +159,6 @@ export class Game extends Scene {
     this.camera.setBackgroundColor(0x000000);
 
     this.putBG();
-    this.putPerlinNoiseOnTopOfBg();
 
     this.input.on("pointerdown", (e: any) => {
       if (e.event.screenX > window.innerWidth * 0.9) {
@@ -180,6 +182,8 @@ export class Game extends Scene {
       this.worldHeight
     );
 
+    this.putPerlinNoiseOnTopOfBg();
+
     this.createContainerForFurtherAwayFish();
     this.createContainerForPlants();
 
@@ -202,9 +206,21 @@ export class Game extends Scene {
     this.waterNoise.tileScaleX = 4;
     this.waterNoise.tileScaleY = 4;
     this.waterNoise.blendMode = Phaser.BlendModes.MULTIPLY;
-    this.waterNoise.alpha = 0.3;
+    this.waterNoise.alpha = 0.22;
     this.waterNoise.depth = 1;
-    // this.waterNoisefX = this.camera.postFX.addDisplacement("noise", 0.0, 0.0);
+
+    this.waterNoise2 = this.add.tileSprite(
+      0,
+      500, // x, y position (center of the TileSprite)
+      this.worldWidth * 2,
+      this.worldHeight, // width and height of the TileSprite
+      "waterOverlay" // texture key
+    );
+    this.waterNoise.tileScaleX = 2;
+    this.waterNoise.tileScaleY = 2;
+    this.waterNoise2.blendMode = Phaser.BlendModes.ADD;
+    this.waterNoise2.alpha = 0.12;
+    this.waterNoise2.depth = 2;
   }
   createContainerForPlants(): void {
     this.plantsContainer = this.add.container();
@@ -255,7 +271,7 @@ export class Game extends Scene {
 
     // Create a linear gradient
     const gradient = ctx.createLinearGradient(0, 0, 0, this.worldHeight);
-    gradient.addColorStop(0, "#87CEEB"); // Light blue
+    gradient.addColorStop(0, "#97dEfB"); // Light blue
     gradient.addColorStop(1, "#00008B"); // Dark blue
 
     // Fill the canvas with the gradient
@@ -303,5 +319,8 @@ export class Game extends Scene {
       4 + 0.5 * Math.abs(Math.cos(this.time.now * 0.0001))
     );
     this.waterNoise.tilePositionX = this.time.now * 0.04;
+
+    this.waterNoise2.tilePositionX = -this.time.now * 0.05;
+    this.waterNoise2.tilePositionY = -Math.sin(this.time.now * 0.0002) * 35;
   }
 }
