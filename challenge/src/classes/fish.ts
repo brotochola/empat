@@ -17,6 +17,8 @@ export class Fish extends Phaser.GameObjects.Sprite {
   bgFish: boolean;
   limitX: number;
   limitY: number;
+  maxVel: number;
+  maxAcc: number;
 
   constructor(
     scene: Game,
@@ -32,6 +34,8 @@ export class Fish extends Phaser.GameObjects.Sprite {
     this.scene = scene;
 
     this.fishType = tileIndex;
+    this.maxVel = Math.random() + 1.5;
+    this.maxAcc = Math.random() * 0.3 + 0.1;
 
     this.resetFrame();
     if (container) {
@@ -46,10 +50,15 @@ export class Fish extends Phaser.GameObjects.Sprite {
       scene.add.existing(this);
       this.limitX = this.scene.worldWidth;
       this.limitY = this.scene.worldHeight - 300;
+      this.setInteractive();
+
       this.on("pointerdown", (e: Event) => {
-        console.log(e);
+        this.handlePointerDown()
       });
     }
+  }
+  handlePointerDown(){
+    
   }
   resetFrame() {
     let frame = this.frame.clone();
@@ -136,8 +145,8 @@ export class Fish extends Phaser.GameObjects.Sprite {
   }
 
   stayWithinBounds(minX: number, minY: number, maxX: number, maxY: number) {
-    const marginX = 50;
-    const marginY = 100;
+    const marginX = -20;
+    const marginY = 0;
     const turnForce = 0.2;
 
     const force = new Phaser.Math.Vector2(0, 0);
@@ -161,10 +170,10 @@ export class Fish extends Phaser.GameObjects.Sprite {
     //ADD THE ACCELERATION TO THE VELOCITY VECTOR, THEN THE VEL TO THE POSITION.
     //ACCELERATION RESETS ON EACH FRAME BC THIS IS A SIMPLIFICAION :)
     //MASS IS ALWAYS THE SAME, AND FORCE WON'T BE APPLIED CONTINUOUSLY
-    this.acc.limit(0.25);
+    this.acc.limit(this.maxAcc);
     this.vel.add(this.acc);
     this.acc.set(0, 0);
-    this.vel.limit(2.5);
+    this.vel.limit(this.maxVel);
     this.x += this.vel.x;
     this.y += this.vel.y;
     this.vel.scale(0.99);

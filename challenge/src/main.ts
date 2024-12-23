@@ -1,5 +1,6 @@
+import BendWaves from "./classes/shaderClass";
 import { Boot } from "./scenes/Boot";
-import { Game as MainGame } from "./scenes/Game"
+import { Game as MainGame } from "./scenes/Game";
 import { Preloader } from "./scenes/Preloader";
 
 import { Game, Types } from "phaser";
@@ -16,9 +17,9 @@ const config: Types.Core.GameConfig = {
     // mode: Phaser.Scale.CENTER_HORIZONTALLY,
     // autoCenter: Phaser.Scale.CENTER_BOTH,
     mode: Phaser.Scale.ZOOM_4X,
-    
   },
   scene: [Boot, Preloader, MainGame],
+  
 };
 
 export default new Game(config);

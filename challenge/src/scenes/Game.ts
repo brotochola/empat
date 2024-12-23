@@ -1,6 +1,8 @@
 import { Scene } from "phaser";
 import { Fish } from "../classes/fish";
 import { SpatialHash } from "../classes/grid";
+import { Plant } from "../classes/plant";
+import BendWaves from "../classes/shaderClass";
 
 export class Game extends Scene {
   camera: Phaser.Cameras.Scene2D.Camera;
@@ -11,13 +13,21 @@ export class Game extends Scene {
   sandLayer1: Phaser.Tilemaps.TilemapLayer | null;
   sandLayer2: Phaser.Tilemaps.TilemapLayer | null;
   sandLayer3: Phaser.Tilemaps.TilemapLayer | null;
+  waterNoise: Phaser.GameObjects.TileSprite;
   arrOfFish: Fish[] = [];
+  arrOfPlants: Plant[] = [];
   worldWidth: number = 3840;
   worldHeight: number = 1080;
   spatialHash: SpatialHash<Fish>;
   scrollX: number = 0;
 
   furtherAwayFish: Phaser.GameObjects.Container;
+  plantsContainer: Phaser.GameObjects.Container;
+
+  // shader: Phaser.GameObjects.Shader;
+
+  fx: Phaser.FX.Displacement;
+  // waterNoisefX: Phaser.FX.Displacement;
 
   constructor() {
     super("Game");
@@ -56,6 +66,29 @@ export class Game extends Scene {
     this.spatialHash.insert(newFish);
   }
 
+  addPlant(
+    x: number,
+    y: number,
+    type: number,
+    container: Phaser.GameObjects.Container | null
+  ) {
+    if (this.arrOfPlants.length > 50) return;
+    let newPlant = new Plant(this, x, y, "spritesheet", type, container);
+
+    this.arrOfPlants.push(newPlant);
+  }
+
+  addAFewRandomPlants(numberOfPlants: number) {
+    for (let i = 0; i < numberOfPlants; i++) {
+      this.addPlant(
+        Math.random() * this.worldWidth,
+        850,
+        Math.floor(Math.random() * 2),
+        this.plantsContainer
+      );
+    }
+  }
+
   preload() {
     this.load.spritesheet("spritesheet", "assets/tilemap/fishTilesheet.png", {
       frameWidth: 64,
@@ -63,6 +96,10 @@ export class Game extends Scene {
     });
     this.load.image("tileset", "assets/tilemap/fishTilesheet.png");
     this.load.tilemapTiledJSON("map", "assets/tilemap/map_editor_file.json");
+
+    this.load.image("noise", "assets/noise.png");
+    this.load.image("noiseSmall", "assets/noisesmall.png");
+    this.load.glsl("waterShader", "assets/shader/waterShader.glsl");
 
     // this.textures.get('spritesheet').setFilter(Phaser.Textures.FilterMode.NEAREST);
 
@@ -100,8 +137,14 @@ export class Game extends Scene {
 
       if (this.sandLayer1) {
         this.sandLayer1.name = "white sand";
+        this.sandLayer1.depth = 10;
       }
     }
+  }
+
+  createShader() {
+    // this.camera.setPostPipeline(new BendWaves(this.game));
+    this.fx = this.camera.postFX.addDisplacement("noise", -0.1, -0.1);
   }
 
   create() {
@@ -113,6 +156,7 @@ export class Game extends Scene {
     this.camera.setBackgroundColor(0x000000);
 
     this.putBG();
+    this.putPerlinNoiseOnTopOfBg();
 
     this.input.on("pointerdown", (e: any) => {
       if (e.event.screenX > window.innerWidth * 0.9) {
@@ -137,10 +181,34 @@ export class Game extends Scene {
     );
 
     this.createContainerForFurtherAwayFish();
+    this.createContainerForPlants();
+
     this.addABunchOfFishAtRandomPosition(null, 100);
     this.addABunchOfFishAtRandomPosition(this.furtherAwayFish, 100);
+
+    this.addAFewRandomPlants(20);
+
+    this.createShader();
   }
 
+  putPerlinNoiseOnTopOfBg() {
+    this.waterNoise = this.add.tileSprite(
+      0,
+      500, // x, y position (center of the TileSprite)
+      this.worldWidth * 2,
+      this.worldHeight, // width and height of the TileSprite
+      "noise" // texture key
+    );
+    this.waterNoise.tileScaleX = 4;
+    this.waterNoise.tileScaleY = 4;
+    this.waterNoise.blendMode = Phaser.BlendModes.MULTIPLY;
+    this.waterNoise.alpha = 0.3;
+    this.waterNoise.depth = 1;
+    // this.waterNoisefX = this.camera.postFX.addDisplacement("noise", 0.0, 0.0);
+  }
+  createContainerForPlants(): void {
+    this.plantsContainer = this.add.container();
+  }
   createContainerForFurtherAwayFish(): void {
     this.furtherAwayFish = this.add.container();
     this.furtherAwayFish.setScrollFactor(0.5, 1);
@@ -218,5 +286,22 @@ export class Game extends Scene {
     this.arrOfFish.forEach((fish) => {
       fish.update(time);
     });
+
+    this.arrOfPlants.forEach((plant) => {
+      plant.update(time);
+    });
+
+    this.updateFilter();
+  }
+
+  updateFilter() {
+    this.fx.x = Math.sin(this.time.now * 0.001) * 0.036;
+    this.fx.y = Math.cos(this.time.now * 0.001) * 0.046;
+    // this.waterNoisefX.x=Math.sin(this.time.now * 0.001) * 0.166;
+    // this.waterNoisefX.y=Math.sin(this.time.now * 0.001) * 0.166;
+    this.waterNoise.setTileScale(
+      4 + 0.5 * Math.abs(Math.cos(this.time.now * 0.0001))
+    );
+    this.waterNoise.tilePositionX = this.time.now * 0.04;
   }
 }
