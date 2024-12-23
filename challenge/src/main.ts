@@ -13,8 +13,9 @@ const config: Types.Core.GameConfig = {
   parent: "game-container",
   backgroundColor: "#028af8",
   scale: {
-    mode: Phaser.Scale.CENTER_HORIZONTALLY,
+    // mode: Phaser.Scale.CENTER_HORIZONTALLY,
     // autoCenter: Phaser.Scale.CENTER_BOTH,
+    mode: Phaser.Scale.ZOOM_4X,
     
   },
   scene: [Boot, Preloader, MainGame],

@@ -1,4 +1,4 @@
-function formatNumber(num: number) {
+export function formatNumber(num: number) {
   const str = num.toString();
   if (str.length === 1) {
     return "00" + str;
@@ -8,5 +8,3 @@ function formatNumber(num: number) {
     return str;
   }
 }
-
-export { formatNumber };

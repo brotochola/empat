@@ -13,6 +13,7 @@ export class Fish extends Phaser.GameObjects.Sprite {
   fishICanTouch: Fish[] = [];
   fishOfMyTypeICanSee: Fish[] = [];
   scene: Game;
+  time: number;
 
   constructor(
     scene: Game,
@@ -29,6 +30,17 @@ export class Fish extends Phaser.GameObjects.Sprite {
     this.fishType = tileIndex;
 
     scene.add.existing(this);
+
+    this.resetFrame()
+  
+    // this.frame.setCutPosition(this.frame.cutX, this.frame.cutY + 1);
+  }
+  resetFrame(){
+    let frame=this.frame.clone()
+    frame.setCutSize(64,63)
+    frame.setCutPosition(frame.cutX, frame.cutY+1)
+    this.setFrame(frame)
+
   }
 
   applyForce(force: Phaser.Math.Vector2): void {
@@ -69,7 +81,7 @@ export class Fish extends Phaser.GameObjects.Sprite {
 
   separation() {
     if (!this.fishICanTouch.length) return;
-    const strength = 0.2;
+    const strength = 0.5;
     const steer = new Phaser.Math.Vector2(0, 0);
 
     for (const other of this.fishICanTouch) {
@@ -97,30 +109,27 @@ export class Fish extends Phaser.GameObjects.Sprite {
   getFishCloseToMe() {
     this.fishICanTouch = this.grid.query(this.x, this.y, 10);
     this.fishICanSee = this.grid.query(this.x, this.y, 300);
-    this.fishICanSee = this.fishICanSee.filter(
-      (k) => !this.fishICanTouch.includes(k)
-    );
-
     this.fishOfMyTypeICanSee = this.fishICanSee.filter(
       (k) => k.fishType == this.fishType
     );
   }
 
   stayWithinBounds(minX: number, minY: number, maxX: number, maxY: number) {
-    const margin = 50; // Margin from the edges to start applying the force
-    const turnForce = 1; // Strength of the force
+    const marginX = 50;
+    const marginY = 100;
+    const turnForce = 1;
 
     const force = new Phaser.Math.Vector2(0, 0);
 
-    if (this.x < minX + margin) {
+    if (this.x < minX + marginX) {
       force.x = turnForce;
-    } else if (this.x > maxX - margin) {
+    } else if (this.x > maxX - marginX) {
       force.x = -turnForce;
     }
 
-    if (this.y < minY + margin) {
+    if (this.y < minY + marginY) {
       force.y = turnForce;
-    } else if (this.y > maxY - margin) {
+    } else if (this.y > maxY - marginY) {
       force.y = -turnForce;
     }
 
@@ -141,6 +150,7 @@ export class Fish extends Phaser.GameObjects.Sprite {
   }
 
   update(time: number) {
+    this.time = time;
     //EACH FISH RE INSERTS ITSELF IN THE GRID
     this.grid.insert(this);
 
@@ -148,6 +158,8 @@ export class Fish extends Phaser.GameObjects.Sprite {
     this.alignment();
     this.separation();
     this.cohesion();
+
+    this.moveRandomly();
 
     this.stayWithinBounds(
       0,
@@ -158,6 +170,18 @@ export class Fish extends Phaser.GameObjects.Sprite {
 
     this.move();
     this.adjustAngle();
+    // if(this.vel.x<0.00001 && time>5000){
+    //   debugger
+    // }
+  }
+
+  moveRandomly() {
+    if (this.fishOfMyTypeICanSee.length) return;
+
+    let x = Math.sin(this.time * 0.001) + (Math.random() - 0.5) * 0.01;
+    let y = Math.cos(this.time * 0.001) + (Math.random() - 0.5) * 0.01;
+
+    this.applyForce(new Phaser.Math.Vector2(x, y));
   }
 
   adjustAngle() {

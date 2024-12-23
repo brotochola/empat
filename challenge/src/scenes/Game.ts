@@ -1,5 +1,4 @@
 import { Scene } from "phaser";
-import { formatNumber } from "../utils";
 import { Fish } from "../classes/fish";
 import { SpatialHash } from "../classes/grid";
 
@@ -17,7 +16,7 @@ export class Game extends Scene {
   worldHeight: number = 1080;
   spatialHash: SpatialHash<Fish>;
   scrollX: number = 0;
-  numberOfFish: number = 120;
+  numberOfFish: number = 130
 
   constructor() {
     super("Game");
@@ -50,6 +49,10 @@ export class Game extends Scene {
     });
     this.load.image("tileset", "assets/tilemap/fishTilesheet.png");
     this.load.tilemapTiledJSON("map", "assets/tilemap/map_editor_file.json");
+
+    // this.textures.get('spritesheet').setFilter(Phaser.Textures.FilterMode.NEAREST);
+
+    // this.textures.get('tileset').setFilter(Phaser.Textures.FilterMode.NEAREST);
   }
 
   loadTileMap() {
@@ -93,39 +96,43 @@ export class Game extends Scene {
     this.camera = this.cameras.main;
     window["camera"] = this.camera;
 
-    this.cameras.main.setBounds(0, 0, this.worldWidth, this.worldHeight);
-
     // this.camera.setScroll(500,0)
     this.camera.setBackgroundColor(0x000000);
 
     this.putBG();
 
-    // this.background.setAlpha(0.5);
-
-    // this.msg_text = this.add.text(midWidth, midHeight, "game", {
-    //   fontFamily: "Arial Black",
-    //   fontSize: 38,
-    //   color: "#ffffff",
-    //   stroke: "#000000",
-    //   strokeThickness: 8,
-    //   align: "center",
-    // });
-    // this.msg_text.setOrigin(0.5);
-
     this.input.on("pointerdown", (e: any) => {
-      console.log(e)
-      console.log(e.x, window.innerWidth);
-      if (e.x > window.innerWidth * 0.9) {
+      if (e.event.screenX > window.innerWidth * 0.9) {
         this.scrollX = this.camera.scrollX + 250;
-      } else if (e.x < window.innerWidth * 0.1) {
+      } else if (e.event.screenX < window.innerWidth * 0.1) {
         this.scrollX = this.camera.scrollX - 250;
       }
     });
 
-    // this.loadFish();
     this.loadTileMap();
     this.addABunchOfFishAtRandomPosition();
+    // this.handleWindowResize();
+    // window.onresize = () => {
+    //   this.handleWindowResize();
+    // };
+
+    this.cameras.main.setBounds(
+      0, // -(1920 - window.innerWidth) * 0.5,
+      0,
+      this.worldWidth,
+      this.worldHeight
+    );
   }
+
+  // handleWindowResize() {
+  //   const canvas = this.game.canvas;
+  //   const width = window.innerWidth;
+  //   const height = window.innerHeight;
+
+  //   // canvas.style.width = `${width}px`;
+  //   // canvas.style.height = `${height}px`;
+  //   // this.game.scale.resize(width, height);
+  // }
 
   addABunchOfFishAtRandomPosition(): void {
     const fishInTileMap = [72, 74, 76, 78, 80, 100];
