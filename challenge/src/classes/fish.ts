@@ -186,9 +186,11 @@ export class Fish extends Phaser.GameObjects.Sprite {
     this.time = time;
     //EACH FISH RE INSERTS ITSELF IN THE GRID
     this.grid.insert(this);
+    
 
     this.getFishCloseToMe();
     this.alignment();
+
     this.separation();
     this.cohesion();
 
