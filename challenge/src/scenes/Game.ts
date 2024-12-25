@@ -2,7 +2,7 @@ import { Scene } from "phaser";
 import { Fish } from "../classes/fish";
 import { SpatialHash } from "../classes/grid";
 import { Plant } from "../classes/plant";
-import BendWaves from "../classes/shaderClass";
+
 
 export class Game extends Scene {
   camera: Phaser.Cameras.Scene2D.Camera;
@@ -73,7 +73,7 @@ export class Game extends Scene {
     type: number,
     container: Phaser.GameObjects.Container | null
   ) {
-    if (this.arrOfPlants.length > 50) return;
+    if (this.arrOfPlants.length > 20) return;
     let newPlant = new Plant(this, x, y, "spritesheet", type, container);
 
     this.arrOfPlants.push(newPlant);

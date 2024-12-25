@@ -12,6 +12,7 @@ export class Fish extends Phaser.GameObjects.Sprite {
   fishICanSee: Fish[] = [];
   fishICanTouch: Fish[] = [];
   fishOfMyTypeICanSee: Fish[] = [];
+  fishOfOtherTypeICanSee: Fish[] = [];
   scene: Game;
   time: number;
   bgFish: boolean;
@@ -29,11 +30,11 @@ export class Fish extends Phaser.GameObjects.Sprite {
     grid: SpatialHash<Fish>,
     container: Phaser.GameObjects.Container | null
   ) {
-    super(scene, x, y, tilesetKey, tileIndex);
+    super(scene, x, y, tilesetKey, container ? 80 : tileIndex);
     this.grid = grid;
     this.scene = scene;
 
-    this.fishType = tileIndex;
+    this.fishType = container ? 80 : tileIndex;
     this.maxVel = Math.random() + 1.5;
     this.maxAcc = Math.random() * 0.3 + 0.1;
 
@@ -43,7 +44,7 @@ export class Fish extends Phaser.GameObjects.Sprite {
       this.bgFish = true;
       this.tint = 0x000055;
       container.add(this);
-      this.limitX = this.scene.worldWidth * 2;
+      this.limitX = this.scene.worldWidth + window.innerWidth;
       this.limitY = (this.scene.worldHeight - 500) * 2;
     } else {
       //IT'S AN INTERACTIVE FISH
@@ -53,13 +54,11 @@ export class Fish extends Phaser.GameObjects.Sprite {
       this.setInteractive();
 
       this.on("pointerdown", (e: Event) => {
-        this.handlePointerDown()
+        this.handlePointerDown();
       });
     }
   }
-  handlePointerDown(){
-    
-  }
+  handlePointerDown() {}
   resetFrame() {
     let frame = this.frame.clone();
     frame.setCutSize(64, 63);
@@ -74,7 +73,7 @@ export class Fish extends Phaser.GameObjects.Sprite {
   alignment() {
     if (!this.fishOfMyTypeICanSee.length) return;
 
-    const strength = 0.09;
+    const strength = 0.3;
     const avgVel = new Phaser.Math.Vector2(0, 0);
 
     for (const other of this.fishOfMyTypeICanSee) {
@@ -88,7 +87,7 @@ export class Fish extends Phaser.GameObjects.Sprite {
 
   cohesion() {
     if (!this.fishOfMyTypeICanSee.length) return;
-    const strength = 0.025;
+    const strength = 0.1;
     const center = new Phaser.Math.Vector2(0, 0);
 
     for (const other of this.fishOfMyTypeICanSee) {
@@ -142,11 +141,15 @@ export class Fish extends Phaser.GameObjects.Sprite {
     this.fishOfMyTypeICanSee = this.bgFish
       ? this.fishICanSee
       : this.fishICanSee.filter((k) => k.fishType == this.fishType);
+
+    this.fishOfOtherTypeICanSee = this.bgFish
+      ? []
+      : this.fishICanSee.filter((k) => !this.fishOfMyTypeICanSee.includes(k));
   }
 
   stayWithinBounds(minX: number, minY: number, maxX: number, maxY: number) {
     const marginX = -20;
-    const marginY = 0;
+    const marginY = -20;
     const turnForce = 0.2;
 
     const force = new Phaser.Math.Vector2(0, 0);
@@ -172,7 +175,7 @@ export class Fish extends Phaser.GameObjects.Sprite {
     //MASS IS ALWAYS THE SAME, AND FORCE WON'T BE APPLIED CONTINUOUSLY
     this.acc.limit(this.maxAcc);
     this.vel.add(this.acc);
-    this.acc.set(0, 0);
+    this.acc.scale(0.5); //IF I SET IT TO 0 THEY TURN TOO FAST
     this.vel.limit(this.maxVel);
     this.x += this.vel.x;
     this.y += this.vel.y;
@@ -189,6 +192,8 @@ export class Fish extends Phaser.GameObjects.Sprite {
     this.separation();
     this.cohesion();
 
+    this.repelOtherFish();
+
     this.moveRandomly();
 
     this.stayWithinBounds(0, 0, this.limitX, this.limitY);
@@ -200,8 +205,26 @@ export class Fish extends Phaser.GameObjects.Sprite {
     // }
   }
 
+  repelOtherFish() {
+    if (!this.fishOfOtherTypeICanSee.length) return;
+    const strength = 0.1;
+    const center = new Phaser.Math.Vector2(0, 0);
+
+    for (const other of this.fishOfOtherTypeICanSee) {
+      center.add(new Phaser.Math.Vector2(other.x, other.y));
+    }
+
+    center.scale(1 / this.fishOfOtherTypeICanSee.length);
+    const steer = center
+      .subtract(new Phaser.Math.Vector2(this.x, this.y))
+      .normalize()
+      .scale(-strength);
+    this.applyForce(steer);
+  }
+
   moveRandomly() {
-    if (this.fishOfMyTypeICanSee.length) return;
+    if (this.fishOfMyTypeICanSee.length || this.fishOfOtherTypeICanSee.length)
+      return;
 
     let x = Math.sin(this.time * 0.001) + (Math.random() - 0.5) * 0.01;
     let y = Math.cos(this.time * 0.001) + (Math.random() - 0.5) * 0.01;

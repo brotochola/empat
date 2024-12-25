@@ -5,7 +5,7 @@
     "main": "index.js",
     "scripts": {
         "dev": "node esbuild/dev.server.mjs -w",
-        "build": "node log.js build & node esbuild/build.prod.mjs",
+        "build": "node esbuild/build.prod.mjs",
         "dev-nolog": "node esbuild/dev.server.mjs -w",
         "build-nolog": "node esbuild/build.prod.mjs"
     },
