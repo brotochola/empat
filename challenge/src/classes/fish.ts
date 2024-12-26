@@ -7,6 +7,10 @@ export class Fish extends Phaser.GameObjects.Sprite {
     Math.random() - 0.5,
     Math.random() - 0.5
   );
+
+  lastVel: Phaser.Math.Vector2 = new Phaser.Math.Vector2();
+  lastPos: Phaser.Math.Vector2 = new Phaser.Math.Vector2();
+
   fishType: number;
   grid: SpatialHash<Fish>;
   fishICanSee: Fish[] = [];
@@ -20,6 +24,7 @@ export class Fish extends Phaser.GameObjects.Sprite {
   limitY: number;
   maxVel: number;
   maxAcc: number;
+  connectedToSocket: boolean;
 
   constructor(
     scene: Game,
@@ -28,9 +33,12 @@ export class Fish extends Phaser.GameObjects.Sprite {
     tilesetKey: string,
     tileIndex: number,
     grid: SpatialHash<Fish>,
-    container: Phaser.GameObjects.Container | null
+    container: Phaser.GameObjects.Container | null,
+    connectedToSocket: boolean
   ) {
     super(scene, x, y, tilesetKey, container ? 80 : tileIndex);
+
+    this.connectedToSocket = connectedToSocket;
     this.grid = grid;
     this.scene = scene;
 
@@ -58,7 +66,9 @@ export class Fish extends Phaser.GameObjects.Sprite {
       });
     }
   }
-  handlePointerDown() {}
+  handlePointerDown() {
+    console.log(this.x, this.y, this.limitY);
+  }
   resetFrame() {
     let frame = this.frame.clone();
     frame.setCutSize(64, 63);
@@ -134,7 +144,7 @@ export class Fish extends Phaser.GameObjects.Sprite {
       .query(this.x, this.y, 10)
       .filter((k) => k.bgFish == this.bgFish);
     this.fishICanSee = this.grid
-      .query(this.x, this.y, 300)
+      .query(this.x, this.y, 266)
       .filter((k) => k.bgFish == this.bgFish);
 
     //BACKGROUND FISH DONT CARE ABOUT FISH THEIR TYPE
@@ -148,9 +158,9 @@ export class Fish extends Phaser.GameObjects.Sprite {
   }
 
   stayWithinBounds(minX: number, minY: number, maxX: number, maxY: number) {
-    const marginX = -20;
-    const marginY = -20;
-    const turnForce = 0.2;
+    const marginX = 0;
+    const marginY = 0;
+    const turnForce = 0.41;
 
     const force = new Phaser.Math.Vector2(0, 0);
 
@@ -186,21 +196,22 @@ export class Fish extends Phaser.GameObjects.Sprite {
     this.time = time;
     //EACH FISH RE INSERTS ITSELF IN THE GRID
     this.grid.insert(this);
-    
 
-    this.getFishCloseToMe();
-    this.alignment();
+    if (!this.connectedToSocket) {
+      this.getFishCloseToMe();
+      this.alignment();
 
-    this.separation();
-    this.cohesion();
+      this.separation();
+      this.cohesion();
 
-    this.repelOtherFish();
+      this.repelOtherFish();
 
-    this.moveRandomly();
+      this.moveRandomly();
 
-    this.stayWithinBounds(0, 0, this.limitX, this.limitY);
+      this.stayWithinBounds(-50, -50, this.limitX, this.limitY);
+      this.move();
+    }
 
-    this.move();
     this.adjustAngle();
     // if(this.vel.x<0.00001 && time>5000){
     //   debugger
@@ -209,7 +220,7 @@ export class Fish extends Phaser.GameObjects.Sprite {
 
   repelOtherFish() {
     if (!this.fishOfOtherTypeICanSee.length) return;
-    const strength = 0.1;
+    const strength = 0.3;
     const center = new Phaser.Math.Vector2(0, 0);
 
     for (const other of this.fishOfOtherTypeICanSee) {
@@ -245,5 +256,20 @@ export class Fish extends Phaser.GameObjects.Sprite {
 
     // if (this.vel.x > 0) this.scaleX = -1;
     // this.rotation = Math.atan2(this.vel.y, this.vel.x) % Math.PI*0.5;
+  }
+
+  updatePositionFromSocket(data: any) {
+    //I SAVE THE LAST POSITION AND VELOCITY TO INTERPOLATE
+    this.lastPos.x = this.x;
+    this.lastPos.y = this.y;
+
+    this.lastVel.x = this.vel.x;
+    this.lastVel.y = this.vel.y;
+
+    this.x = data.x;
+    this.y = data.y;
+
+    this.vel.x = data.vx;
+    this.vel.y = data.vy;
   }
 }

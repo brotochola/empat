@@ -19,6 +19,7 @@ export class Plant extends Phaser.GameObjects.Sprite {
   ];
 
   fx: Phaser.FX.Displacement;
+  connectedToSocket: boolean;
 
   constructor(
     scene: Game,
@@ -26,9 +27,11 @@ export class Plant extends Phaser.GameObjects.Sprite {
     y: number,
     tilesetKey: string,
     type: number,
-    container: Phaser.GameObjects.Container | null
+    container: Phaser.GameObjects.Container | null,
+    connectedToSocket: boolean
   ) {
     super(scene, x, y, tilesetKey, Plant.sequence[type][0]);
+    this.connectedToSocket = connectedToSocket;
     this.tilesetKey = tilesetKey;
     this.scene = scene;
 
@@ -79,14 +82,16 @@ export class Plant extends Phaser.GameObjects.Sprite {
       this.x - (Math.random() * 20 + 20),
       this.y,
       this.plantType,
-      this.parentContainer
+      this.parentContainer,
+      this.connectedToSocket
     );
 
     this.scene.addPlant(
       this.x + (Math.random() * 20 + 20),
       this.y,
       this.plantType,
-      this.parentContainer
+      this.parentContainer,
+      this.connectedToSocket
     );
 
     this.dead = true;

@@ -2,7 +2,33 @@ import { Scene } from "phaser";
 import { Fish } from "../classes/fish";
 import { SpatialHash } from "../classes/grid";
 import { Plant } from "../classes/plant";
+import { WebSocketConnection } from "../webSocketConnection";
 
+type Question = {
+  question: string;
+  answer: string;
+  fishToHighlight: string;
+};
+
+type FishFromSocket = {
+  x: number;
+  y: number;
+  vx: number;
+  type: number;
+  yx: number;
+};
+
+type Level = {
+  name: string;
+  knownFor: string[];
+
+  worldWidth: number;
+  worldHeight: number;
+  numberOfFish: number;
+  numberOfBgFish: number;
+  questions: Question[];
+  fish: FishFromSocket[];
+};
 
 export class Game extends Scene {
   camera: Phaser.Cameras.Scene2D.Camera;
@@ -16,11 +42,17 @@ export class Game extends Scene {
   waterNoise: Phaser.GameObjects.TileSprite;
   waterNoise2: Phaser.GameObjects.TileSprite;
   arrOfFish: Fish[] = [];
+  arrOfBGFish: Fish[] = [];
   arrOfPlants: Plant[] = [];
-  worldWidth: number = 3840;
+  worldWidth: number = 3840; //THESE ARE DEFAULT VALUES THAT WILL BE OVERRITEN BY THE SOCKET CONNECTION
   worldHeight: number = 1080;
   spatialHash: SpatialHash<Fish>;
   scrollX: number = 0;
+  wsConnection: WebSocketConnection;
+  created: boolean = false;
+  ready: boolean = false;
+
+  level: Level;
 
   furtherAwayFish: Phaser.GameObjects.Container;
   plantsContainer: Phaser.GameObjects.Container;
@@ -50,7 +82,8 @@ export class Game extends Scene {
     x: number,
     y: number,
     num: number,
-    container: Phaser.GameObjects.Container | null
+    container: Phaser.GameObjects.Container | null,
+    connectedToSocket: boolean
   ) {
     let newFish = new Fish(
       this,
@@ -59,10 +92,16 @@ export class Game extends Scene {
       "spritesheet",
       num,
       this.spatialHash,
-      container
+      container,
+      connectedToSocket
     );
 
-    this.arrOfFish.push(newFish);
+    if (container) {
+      this.arrOfBGFish.push(newFish);
+    } else {
+      newFish.depth = 1;
+      this.arrOfFish.push(newFish);
+    }
 
     this.spatialHash.insert(newFish);
   }
@@ -71,21 +110,31 @@ export class Game extends Scene {
     x: number,
     y: number,
     type: number,
-    container: Phaser.GameObjects.Container | null
+    container: Phaser.GameObjects.Container | null,
+    connectedToSocket: boolean
   ) {
     if (this.arrOfPlants.length > 20) return;
-    let newPlant = new Plant(this, x, y, "spritesheet", type, container);
+    let newPlant = new Plant(
+      this,
+      x,
+      y,
+      "spritesheet",
+      type,
+      container,
+      connectedToSocket
+    );
 
     this.arrOfPlants.push(newPlant);
   }
 
-  addAFewRandomPlants(numberOfPlants: number) {
+  addAFewRandomPlants(numberOfPlants: number, connectedToSocket: boolean) {
     for (let i = 0; i < numberOfPlants; i++) {
       this.addPlant(
         Math.random() * this.worldWidth,
         850,
         Math.floor(Math.random() * 2),
-        this.plantsContainer
+        this.plantsContainer,
+        connectedToSocket
       );
     }
   }
@@ -106,7 +155,96 @@ export class Game extends Scene {
 
     // this.textures.get('spritesheet').setFilter(Phaser.Textures.FilterMode.NEAREST);
 
+    this.connectToWebSocket();
+  }
+
+  connectToWebSocket() {
     // this.textures.get('tileset').setFilter(Phaser.Textures.FilterMode.NEAREST);
+    this.wsConnection = new WebSocketConnection(
+      "ws://localhost:8080",
+      (data: any) => {
+        this.onMessageFromSocket(data);
+      },
+      () => {
+        console.warn(
+          "# COULD NOT CONNECT TO WEBSOCKET, YOU'RE PLAYING OFFLINE"
+        );
+        this.whatToDoIfWebSocketDidntWork();
+      }
+    );
+  }
+
+  whatToDoIfWebSocketDidntWork() {
+    //  HAVING THE WIDTH AND HEIGHT I CAN CREATE THE BG AND THE OTHER ELEMENTS OF THE SCENE:
+
+    this.putBG();
+    this.loadTileMap();
+    this.putPerlinNoiseOnTopOfBg();
+    this.setCameraBounds();
+
+    this.ready = true;
+
+    this.addABunchOfFishAtRandomPosition(null, 100, false);
+    this.addABunchOfFishAtRandomPosition(this.furtherAwayFish, 100, false);
+    this.addAFewRandomPlants(20, false);
+  }
+
+  onMessageFromSocket(data: any) {
+    if (data.type == "level") {
+      this.level = data as Level;
+      console.log("#GOT LEVEL", this.level);
+      this.initLevelWithDataFromSocket();
+    } else if (data.type == "fishPosition") {
+      this.updateFishPositionFromSocket(data);
+    }
+  }
+  updateFishPositionFromSocket(data: any) {
+    for (let i = 0; i < data.fish.length; i++) {
+      let fish = this.arrOfFish[i];
+      if (fish) fish.updatePositionFromSocket(data.fish[i]);
+    }
+  }
+
+  initLevelWithDataFromSocket() {
+    if (this.created) {
+      //SET WORLDWIDTH AND HEIGHT BEFORE ADDING FISH AND PLANTS
+      this.worldWidth = this.level.worldWidth;
+      this.worldHeight = this.level.worldHeight;
+
+      //  HAVING THE WIDTH AND HEIGHT I CAN CREATE THE BG AND THE OTHER ELEMENTS OF THE SCENE:
+      this.putBG();
+      this.loadTileMap();
+      this.putPerlinNoiseOnTopOfBg();
+      this.setCameraBounds();
+
+      this.ready = true;
+
+      //ADD FISH AND PLANTS:
+      // this.addABunchOfFishAtRandomPosition(null, this.level.numberOfFish, true);
+
+      //ADD FISH FROM SOCKET'S LEVEL
+      for (let i = 0; i < this.level.numberOfFish; i++) {
+        this.addFishFromTheTileSet(
+          this.level.fish[i].x,
+          this.level.fish[i].y,
+          this.level.fish[i].type,
+          null,
+          true
+        );
+      }
+
+      this.addABunchOfFishAtRandomPosition(
+        this.furtherAwayFish,
+        this.level.numberOfBgFish,
+        false
+      );
+      this.addAFewRandomPlants(20, true);
+    } else {
+      //RETRY
+      setTimeout(() => {
+        this.initLevelWithDataFromSocket();
+      }, 200);
+    }
   }
 
   loadTileMap() {
@@ -150,6 +288,16 @@ export class Game extends Scene {
     this.fx = this.camera.postFX.addDisplacement("noise", -0.1, -0.1);
   }
 
+  putListeners() {
+    this.input.on("pointerdown", (e: any) => {
+      if (e.event.screenX > window.innerWidth * 0.9) {
+        this.scrollX = this.camera.scrollX + 250;
+      } else if (e.event.screenX < window.innerWidth * 0.1) {
+        this.scrollX = this.camera.scrollX - 250;
+      }
+    });
+  }
+
   create() {
     console.log("#game.create()");
 
@@ -158,41 +306,16 @@ export class Game extends Scene {
     // this.camera.setScroll(500,0)
     this.camera.setBackgroundColor(0x000000);
 
-    this.putBG();
-
-    this.input.on("pointerdown", (e: any) => {
-      if (e.event.screenX > window.innerWidth * 0.9) {
-        this.scrollX = this.camera.scrollX + 250;
-      } else if (e.event.screenX < window.innerWidth * 0.1) {
-        this.scrollX = this.camera.scrollX - 250;
-      }
-    });
-
-    this.loadTileMap();
-
-    // this.handleWindowResize();
-    // window.onresize = () => {
-    //   this.handleWindowResize();
-    // };
-
-    this.cameras.main.setBounds(
-      0, // -(1920 - window.innerWidth) * 0.5,
-      0,
-      this.worldWidth,
-      this.worldHeight
-    );
-
-    this.putPerlinNoiseOnTopOfBg();
-
     this.createContainerForFurtherAwayFish();
     this.createContainerForPlants();
 
-    this.addABunchOfFishAtRandomPosition(null, 100);
-    this.addABunchOfFishAtRandomPosition(this.furtherAwayFish, 100);
-
-    this.addAFewRandomPlants(20);
-
     this.createShader();
+    this.putListeners();
+    this.created = true;
+  }
+
+  setCameraBounds() {
+    this.cameras.main.setBounds(0, 0, this.worldWidth, this.worldHeight);
   }
 
   putPerlinNoiseOnTopOfBg() {
@@ -230,7 +353,9 @@ export class Game extends Scene {
     this.furtherAwayFish.setScrollFactor(0.5, 1);
     this.furtherAwayFish.setScale(0.5, 0.5);
     // this.furtherAwayFish.blendMode=Phaser.BlendModes.DARKEN
-    this.furtherAwayFish.alpha = 0.15;
+    this.furtherAwayFish.alpha = 0.1;
+    this.furtherAwayFish.name = "furtherAwayFish";
+    this.furtherAwayFish.depth = 1;
   }
   // handleWindowResize() {
   //   const canvas = this.game.canvas;
@@ -244,7 +369,8 @@ export class Game extends Scene {
 
   addABunchOfFishAtRandomPosition(
     container: Phaser.GameObjects.Container | null,
-    num: number
+    num: number,
+    connectedToSocket: boolean
   ): void {
     const fishInTileMap = [72, 74, 76, 78, 80, 100];
     const margin = 100;
@@ -253,7 +379,8 @@ export class Game extends Scene {
         Math.random() * this.worldWidth + margin,
         Math.random() * 600 + margin,
         fishInTileMap[Math.floor(Math.random() * fishInTileMap.length)],
-        container
+        container,
+        connectedToSocket
       );
     }
   }
@@ -282,11 +409,12 @@ export class Game extends Scene {
     gradientTexture?.refresh();
 
     // Add the gradient as an image
-    this.bg = this.add.image(0, 0, "gradient").setOrigin(0);
+    this.bg = this.add.image(0, 0, "gradient");
+    this.bg.setOrigin(0);
     this.bg.setScrollFactor(0, 1);
   }
   update(time: number) {
-    //CLEAR THE GRID
+    if (!this.ready) return;
 
     this.spatialHash.clear();
 
@@ -298,6 +426,10 @@ export class Game extends Scene {
       ),
       0
     );
+
+    this.arrOfBGFish.forEach((fish) => {
+      fish.update(time);
+    });
 
     this.arrOfFish.forEach((fish) => {
       fish.update(time);

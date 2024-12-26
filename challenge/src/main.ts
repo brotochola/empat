@@ -1,4 +1,4 @@
-import BendWaves from "./classes/shaderClass";
+
 import { Boot } from "./scenes/Boot";
 import { Game as MainGame } from "./scenes/Game";
 import { Preloader } from "./scenes/Preloader";

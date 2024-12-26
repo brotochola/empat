@@ -1,0 +1,19 @@
+{
+    "type":"level",
+    "worldWidth": 3840,
+    "worldHeight": 1080,
+    "numberOfFish": 80,
+    "numberOfBgFish": 120,
+    "questions": [
+        {
+            "question": "what color is the highlighted fish?",
+            "answer": "red",
+            "fishToHighlight": "red"
+        },
+        {
+            "question": "what color is the highlighted fish?",
+            "answer": "yellow",
+            "fishToHighlight": "yellow"
+        }
+    ]
+}
