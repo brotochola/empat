@@ -17,6 +17,10 @@ type Level = {
   numberOfBgFish: number;
   questions: Question[];
   fish: Fish[];
+  cohesionFactor: number;
+  alignmentFactor: number;
+  separationFactor: number;
+  escapeFromOtherFishFactor: number;
 };
 
 export type SerializedFish = {
@@ -54,7 +58,11 @@ let time = 0;
           fishInTileMap[Math.floor(Math.random() * fishInTileMap.length)],
           grid,
           level1.worldWidth,
-          level1.worldHeight
+          level1.worldHeight,
+          level1.cohesionFactor,
+          level1.alignmentFactor,
+          level1.separationFactor,
+          level1.escapeFromOtherFishFactor
         )
       );
     }
@@ -117,10 +125,11 @@ let time = 0;
     });
   });
 
+  let deltaTime = 1000 / 60;
   // Run the simulation and broadcast updates
   setInterval(() => {
     updateFish();
     broadcastFish();
-    time += (1000 / 30) * 0.001;
-  }, 1000 / 30); // 30 updates per second
+    time += deltaTime * 0.001;
+  }, deltaTime); // 30 updates per second
 })();

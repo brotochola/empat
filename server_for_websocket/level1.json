@@ -1,10 +1,14 @@
 {
-    "type":"level",
+    "type": "level",
     "worldWidth": 3840,
     "worldHeight": 1080,
-    "numberOfFish": 80,
-    "numberOfBgFish": 120,
-    "numberOfPlants":10,
+    "numberOfFish": 180,
+    "numberOfBgFish": 30,
+    "numberOfPlants": 10,
+    "cohesionFactor": 0.2,
+    "alignmentFactor": 0.6,
+    "separationFactor": 0.33,
+    "escapeFromOtherFishFactor": 0.3,
     "questions": [
         {
             "question": "what color is the highlighted fish?",

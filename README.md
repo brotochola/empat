@@ -3,10 +3,11 @@
 1 - clone the repo
 2 - go to the server_for_websockets folder 
 3 - npm i
-4 - node server.js
-5 - go to the challenge foler
+4 - npm run dev to run the server.
+5 - in a new terminal, go to the challenge foler
 6 - npm i
 7 - npm run dev
+8 - open localhost:3000 to see the game
 
 
 
@@ -14,9 +15,9 @@
 # TODO
 
 - implement bubbles in a particle system on click
-- have a json with an array of levels
 
-  {id:0,question:"what color is the highlighted fish?", answer:"red", numOfFish:30, numOfPlants:3,plantReproductionSpeed:0.1,fishSpeed:0.5, worldWidth:1920}
+
+
 
 - implement speechRecognition to answer to the questions
 
@@ -31,7 +32,7 @@
 
 - add random rocks at start
 
-- make fish avoid those that are not their type
+
 
 - make sure fish dont go too far from the screen limit
 

@@ -3,6 +3,7 @@ import { Fish } from "../classes/fish";
 import { SpatialHash } from "../classes/grid";
 import { Plant } from "../classes/plant";
 import { WebSocketConnection } from "../webSocketConnection";
+import { Toast } from "../classes/toast";
 
 type Question = {
   question: string;
@@ -29,6 +30,7 @@ type Level = {
 };
 
 export class Game extends Scene {
+  toast: Toast = new Toast();
   camera: Phaser.Cameras.Scene2D.Camera;
   background: Phaser.GameObjects.Image;
   msg_text: Phaser.GameObjects.Text;
@@ -149,7 +151,7 @@ export class Game extends Scene {
     this.load.image("noiseSmall", "assets/noisesmall.png");
     this.load.image("waterOverlay", "assets/overlay.png");
 
-    this.load.glsl("waterShader", "assets/shader/waterShader.glsl");
+    // this.load.glsl("waterShader", "assets/shader/waterShader.glsl");
 
     // this.textures.get('spritesheet').setFilter(Phaser.Textures.FilterMode.NEAREST);
 
@@ -191,6 +193,7 @@ export class Game extends Scene {
     if (data.type == "level") {
       this.level = data as Level;
       console.log("#GOT LEVEL", this.level);
+      this.toast.show("Level loaded!",1000)
       this.initLevelWithDataFromSocket();
     } else if (data.type == "fishPosition") {
       this.updateFishPositionFromSocket(data);

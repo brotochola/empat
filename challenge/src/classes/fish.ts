@@ -26,6 +26,8 @@ export class Fish extends Phaser.GameObjects.Sprite {
   maxAcc: number;
   connectedToSocket: boolean;
 
+  
+
   constructor(
     scene: Game,
     x: number,
@@ -142,10 +144,11 @@ export class Fish extends Phaser.GameObjects.Sprite {
   getFishCloseToMe() {
     this.fishICanTouch = this.grid
       .query(this.x, this.y, 10)
-      .filter((k) => k.bgFish == this.bgFish);
+      .filter((k) => k != this && k.bgFish == this.bgFish);
     this.fishICanSee = this.grid
       .query(this.x, this.y, 266)
-      .filter((k) => k.bgFish == this.bgFish);
+      .filter((k) => k != this)
+      .filter((k) => k != this && k.bgFish == this.bgFish);
 
     //BACKGROUND FISH DONT CARE ABOUT FISH THEIR TYPE
     this.fishOfMyTypeICanSee = this.bgFish

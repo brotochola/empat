@@ -25,61 +25,54 @@ export class Fish {
   limitY: number;
   maxVel: number;
   maxAcc: number;
-  // connectedToSocket: boolean;
 
   worldWidth: number;
   worldHeight: number;
+  cohesionFactor: number;
+  alignmentFactor: number;
+  separationFactor: number;
+  escapeFromOtherFishFactor: number;
 
   constructor(
     x: number,
     y: number,
-    // tilesetKey: string,
     tileIndex: number,
     grid: SpatialHash<Fish>,
     worldWidth: number,
-    worldHeight: number
-    // container: Phaser.GameObjects.Container | null,
-    // connectedToSocket: boolean
+    worldHeight: number,
+    cohesionFactor: number = 0.2,
+    alignmentFactor: number = 0.6,
+    separationFactor: number = 0.33,
+    escapeFromOtherFishFactor: number = 0.3
   ) {
+    this.cohesionFactor = cohesionFactor;
+    this.alignmentFactor = alignmentFactor;
+    this.separationFactor = separationFactor;
+    this.escapeFromOtherFishFactor = escapeFromOtherFishFactor;
+
     this.x = x;
     this.y = y;
     this.worldHeight = worldHeight;
     this.worldWidth = worldWidth;
-    // super(scene, x, y, tilesetKey, container ? 80 : tileIndex);
 
-    // this.connectedToSocket = connectedToSocket;
     this.grid = grid;
-    // this.scene = scene;
 
     this.fishType = tileIndex;
-    this.maxVel = Math.random() + 1.5;
+    this.maxVel = Math.random() + 2.5;
     this.maxAcc = Math.random() * 0.3 + 0.1;
 
-    // this.resetFrame();
-
     this.limitX = worldWidth;
-    this.limitY = worldHeight - 300;
-    // this.setInteractive();
+    this.limitY = worldHeight - 250;
   }
-  // handlePointerDown() {
-  //   console.log(this.x, this.y, this.limitY);
-  // }
-  // resetFrame() {
-  //   let frame = this.frame.clone();
-  //   frame.setCutSize(64, 63);
-  //   frame.setCutPosition(frame.cutX, frame.cutY + 1);
-  //   this.setFrame(frame);
-  // }
 
   applyForce(force: Vector): void {
     this.acc.add(force);
-    // console.log(this.acc, force)
   }
 
   alignment() {
     if (!this.fishOfMyTypeICanSee.length) return;
 
-    const strength = 0.3;
+    const strength = this.alignmentFactor;
     const avgVel = new Vector(0, 0);
 
     for (const other of this.fishOfMyTypeICanSee) {
@@ -87,13 +80,13 @@ export class Fish {
     }
 
     avgVel.scale(1 / this.fishOfMyTypeICanSee.length);
-    avgVel.normalize().scale(strength); // Adjust strength of alignment force
+    avgVel.normalize().scale(strength);
     this.applyForce(avgVel);
   }
 
   cohesion() {
     if (!this.fishOfMyTypeICanSee.length) return;
-    const strength = 0.1;
+    const strength = this.cohesionFactor;
     const center = new Vector(0, 0);
 
     for (const other of this.fishOfMyTypeICanSee) {
@@ -110,14 +103,14 @@ export class Fish {
 
   separation() {
     if (!this.fishICanTouch.length) return;
-    const strength = 0.33;
+    const strength = this.separationFactor;
     const steer = new Vector(0, 0);
 
     for (const other of this.fishICanTouch) {
       const dist = distanceBetween(this.x, this.y, other.x, other.y);
       if (dist > 0) {
         const diff = new Vector(this.x - other.x, this.y - other.y);
-        diff.scale(1 / dist); // Weight by distance
+        diff.scale(1 / dist);
         steer.add(diff);
       }
     }
@@ -129,13 +122,12 @@ export class Fish {
 
   getFishCloseToMe() {
     this.fishICanTouch = this.grid
-      .query(this.x, this.y, 10)
-      // .filter((k) => k != this);
-    // .filter((k) => k.bgFish == this.bgFish);
+      .query(this.x, this.y, 20)
+      .filter((k) => k != this);
+
     this.fishICanSee = this.grid
       .query(this.x, this.y, 266)
-      // .filter((k) => k != this);
-    // .filter((k) => k.bgFish == this.bgFish);
+      .filter((k) => k != this);
 
     //BACKGROUND FISH DONT CARE ABOUT FISH THEIR TYPE
     this.fishOfMyTypeICanSee = this.fishICanSee.filter(
@@ -152,7 +144,7 @@ export class Fish {
   stayWithinBounds(minX: number, minY: number, maxX: number, maxY: number) {
     const marginX = 0;
     const marginY = 0;
-    const turnForce = 0.41;
+    const turnForce = 1.41;
 
     const force = new Vector(0, 0);
 
@@ -176,13 +168,9 @@ export class Fish {
     //ACCELERATION RESETS ON EACH FRAME BC THIS IS A SIMPLIFICAION :)
     //MASS IS ALWAYS THE SAME, AND FORCE WON'T BE APPLIED CONTINUOUSLY
 
-
-    
-
-
     this.acc.limit(this.maxAcc);
     this.vel.add(this.acc);
-    
+
     this.acc.scale(0.5); //IF I SET IT TO 0 THEY TURN TOO FAST
     this.vel.limit(this.maxVel);
     this.x += this.vel.x;
@@ -218,7 +206,7 @@ export class Fish {
 
   repelOtherFish() {
     if (!this.fishOfOtherTypeICanSee.length) return;
-    const strength = 0.3;
+    const strength = this.escapeFromOtherFishFactor;
     const center = new Vector(0, 0);
 
     for (const other of this.fishOfOtherTypeICanSee) {
