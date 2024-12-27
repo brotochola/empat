@@ -5,7 +5,7 @@ export class Plant extends Phaser.GameObjects.Sprite {
   startingNumber: number = Math.random();
   scene: Game;
   time: number;
-  bgPlant: boolean;
+  // bgPlant: boolean;
   tilesetKey: string;
   age = 0;
   growingStage: number = 0;
@@ -31,26 +31,25 @@ export class Plant extends Phaser.GameObjects.Sprite {
     connectedToSocket: boolean
   ) {
     super(scene, x, y, tilesetKey, Plant.sequence[type][0]);
+
     this.connectedToSocket = connectedToSocket;
     this.tilesetKey = tilesetKey;
     this.scene = scene;
 
     this.plantType = type;
+    this.name = "plant";
+    // this.setInteractive();
+
+    // this.on("pointerdown", (e: Event) => {
+    //   this.handlePointerDown();
+    // });
 
     this.resetFrame();
     if (container) {
-      //IT'S A BACKGROUND PLANT
-      this.bgPlant = true;
       container.add(this);
     } else {
       //IT'S AN INTERACTIVE PLANT
       scene.add.existing(this);
-
-      this.setInteractive();
-
-      this.on("pointerdown", (e: Event) => {
-        this.handlePointerDown();
-      });
     }
 
     this.setOrigin(0.5, 1);

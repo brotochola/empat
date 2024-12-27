@@ -4,6 +4,7 @@
     "worldHeight": 1080,
     "numberOfFish": 80,
     "numberOfBgFish": 120,
+    "numberOfPlants":10,
     "questions": [
         {
             "question": "what color is the highlighted fish?",

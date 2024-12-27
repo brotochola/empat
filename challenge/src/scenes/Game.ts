@@ -19,9 +19,7 @@ type FishFromSocket = {
 };
 
 type Level = {
-  name: string;
-  knownFor: string[];
-
+  numberOfPlants: number;
   worldWidth: number;
   worldHeight: number;
   numberOfFish: number;
@@ -238,7 +236,7 @@ export class Game extends Scene {
         this.level.numberOfBgFish,
         false
       );
-      this.addAFewRandomPlants(20, true);
+      this.addAFewRandomPlants(this.level.numberOfPlants, true);
     } else {
       //RETRY
       setTimeout(() => {
@@ -347,6 +345,8 @@ export class Game extends Scene {
   }
   createContainerForPlants(): void {
     this.plantsContainer = this.add.container();
+    this.plantsContainer.name = "plantsContainer";
+    this.plantsContainer.depth = 2;
   }
   createContainerForFurtherAwayFish(): void {
     this.furtherAwayFish = this.add.container();
