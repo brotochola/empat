@@ -126,10 +126,10 @@ let time = 0;
   });
 
   let deltaTime = 1000 / 60;
-  // Run the simulation and broadcast updates
+
   setInterval(() => {
     updateFish();
     broadcastFish();
     time += deltaTime * 0.001;
-  }, deltaTime); // 30 updates per second
+  }, deltaTime);
 })();

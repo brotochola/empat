@@ -4,6 +4,7 @@ import { SpatialHash } from "../classes/grid";
 import { Plant } from "../classes/plant";
 import { WebSocketConnection } from "../webSocketConnection";
 import { Toast } from "../classes/toast";
+import { getURLWithNoPortAndProtocol, mobileCheck } from "../utils";
 
 type Question = {
   question: string;
@@ -161,7 +162,7 @@ export class Game extends Scene {
   connectToWebSocket() {
     // this.textures.get('tileset').setFilter(Phaser.Textures.FilterMode.NEAREST);
     this.wsConnection = new WebSocketConnection(
-      "ws://localhost:8080",
+      "ws://"+getURLWithNoPortAndProtocol()+":8080",
       (data: any) => {
         this.onMessageFromSocket(data);
       },
@@ -193,7 +194,7 @@ export class Game extends Scene {
     if (data.type == "level") {
       this.level = data as Level;
       console.log("#GOT LEVEL", this.level);
-      this.toast.show("Level loaded!",1000)
+      this.toast.show("Level loaded from the cloud!");
       this.initLevelWithDataFromSocket();
     } else if (data.type == "fishPosition") {
       this.updateFishPositionFromSocket(data);
@@ -285,15 +286,18 @@ export class Game extends Scene {
   }
 
   createShader() {
-    // this.camera.setPostPipeline(new BendWaves(this.game));
+    if (mobileCheck()) return;
     this.fx = this.camera.postFX.addDisplacement("noise", -0.1, -0.1);
   }
 
   putListeners() {
     this.input.on("pointerdown", (e: any) => {
-      if (e.event.screenX > window.innerWidth * 0.9) {
+      console.log(e)
+      let x=e.event.screenX || e.downX
+      let y=e.event.screenY || e.downY
+      if (x> window.innerWidth * 0.9) {
         this.scrollX = this.camera.scrollX + 250;
-      } else if (e.event.screenX < window.innerWidth * 0.1) {
+      } else if (x < window.innerWidth * 0.1) {
         this.scrollX = this.camera.scrollX - 250;
       }
     });
@@ -320,6 +324,7 @@ export class Game extends Scene {
   }
 
   putPerlinNoiseOnTopOfBg() {
+    if (mobileCheck()) return;
     this.waterNoise = this.add.tileSprite(
       0,
       500, // x, y position (center of the TileSprite)
@@ -446,16 +451,21 @@ export class Game extends Scene {
   }
 
   updateFilter() {
-    this.fx.x = Math.sin(this.time.now * 0.001) * 0.036;
-    this.fx.y = Math.cos(this.time.now * 0.001) * 0.046;
+    if (this.fx) {
+      this.fx.x = Math.sin(this.time.now * 0.001) * 0.036;
+      this.fx.y = Math.cos(this.time.now * 0.001) * 0.046;
+    }
     // this.waterNoisefX.x=Math.sin(this.time.now * 0.001) * 0.166;
     // this.waterNoisefX.y=Math.sin(this.time.now * 0.001) * 0.166;
-    this.waterNoise.setTileScale(
-      4 + 0.5 * Math.abs(Math.cos(this.time.now * 0.0001))
-    );
-    this.waterNoise.tilePositionX = this.time.now * 0.04;
-
-    this.waterNoise2.tilePositionX = -this.time.now * 0.05;
-    this.waterNoise2.tilePositionY = -Math.sin(this.time.now * 0.0002) * 35;
+    if (this.waterNoise) {
+      this.waterNoise.setTileScale(
+        4 + 0.5 * Math.abs(Math.cos(this.time.now * 0.0001))
+      );
+      this.waterNoise.tilePositionX = this.time.now * 0.04;
+    }
+    if (this.waterNoise2) {
+      this.waterNoise2.tilePositionX = -this.time.now * 0.05;
+      this.waterNoise2.tilePositionY = -Math.sin(this.time.now * 0.0002) * 35;
+    }
   }
 }

@@ -222,7 +222,11 @@ export class Fish {
   }
 
   moveRandomly() {
-    if (this.fishOfMyTypeICanSee.length || this.fishOfOtherTypeICanSee.length)
+    if (
+      this.fishOfMyTypeICanSee.length ||
+      this.fishOfOtherTypeICanSee.length ||
+      this.fishICanTouch.length
+    )
       return;
 
     let x = Math.sin(this.time * 0.001) + (Math.random() - 0.5) * 0.01;

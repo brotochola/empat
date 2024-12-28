@@ -16,7 +16,7 @@
 
 - implement bubbles in a particle system on click
 
-
+- check if webgl works before putting the filters, bc in my phone it doesnt work
 
 
 - implement speechRecognition to answer to the questions

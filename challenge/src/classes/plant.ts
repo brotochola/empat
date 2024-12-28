@@ -1,4 +1,5 @@
 import { Game } from "../scenes/Game";
+import { mobileCheck } from "../utils";
 
 export class Plant extends Phaser.GameObjects.Sprite {
   plantType: number;
@@ -54,7 +55,9 @@ export class Plant extends Phaser.GameObjects.Sprite {
 
     this.setOrigin(0.5, 1);
     //ADD DISPLACEMENT FILTER
-    this.fx = this.postFX.addDisplacement("noiseSmall", 0.0, 0.0);
+    if (!mobileCheck()) {
+      this.fx = this.postFX.addDisplacement("noiseSmall", 0.0, 0.0);
+    }
   }
   handlePointerDown() {
     console.log(this);
@@ -137,7 +140,9 @@ export class Plant extends Phaser.GameObjects.Sprite {
   }
 
   updateFilter() {
-    this.fx.x = Math.sin(this.time * 0.0005) * 0.33;
-    this.fx.y = Math.cos(this.time * 0.001) * 0.01;
+    if (this.fx) {
+      this.fx.x = Math.sin(this.time * 0.0005) * 0.33;
+      this.fx.y = Math.cos(this.time * 0.001) * 0.01;
+    }
   }
 }
