@@ -5,8 +5,9 @@ import { Plant } from "../classes/plant";
 import { WebSocketConnection } from "../webSocketConnection";
 import { Toast } from "../classes/toast";
 import { getURLWithNoPortAndProtocol, mobileCheck } from "../utils";
+import { QuestionManager } from "../classes/questionManager";
 
-type Question = {
+export type Question = {
   question: string;
   answer: string;
   fishToHighlight: string;
@@ -31,6 +32,7 @@ type Level = {
 };
 
 export class Game extends Scene {
+  questionManager: QuestionManager;
   toast: Toast = new Toast();
   camera: Phaser.Cameras.Scene2D.Camera;
   background: Phaser.GameObjects.Image;
@@ -52,6 +54,9 @@ export class Game extends Scene {
   wsConnection: WebSocketConnection;
   created: boolean = false;
   ready: boolean = false;
+
+  cameraLimitMinX = 0;
+  cameraLimitMaxX = this.worldWidth - window.innerWidth;
 
   level: Level;
 
@@ -145,6 +150,8 @@ export class Game extends Scene {
       frameWidth: 64,
       frameHeight: 64,
     });
+    this.load.image("highlight", "assets/highlight.png");
+
     this.load.image("tileset", "assets/tilemap/fishTilesheet.png");
     this.load.tilemapTiledJSON("map", "assets/tilemap/map_editor_file.json");
 
@@ -159,10 +166,16 @@ export class Game extends Scene {
     this.connectToWebSocket();
   }
 
+  unhighlightAllFish() {
+    for (let fish of this.arrOfFish) {
+      fish.unhighlight();
+    }
+  }
+
   connectToWebSocket() {
     // this.textures.get('tileset').setFilter(Phaser.Textures.FilterMode.NEAREST);
     this.wsConnection = new WebSocketConnection(
-      "ws://"+getURLWithNoPortAndProtocol()+":8080",
+      "ws://" + getURLWithNoPortAndProtocol() + ":8080",
       (data: any) => {
         this.onMessageFromSocket(data);
       },
@@ -188,6 +201,9 @@ export class Game extends Scene {
     this.addABunchOfFishAtRandomPosition(null, 100, false);
     this.addABunchOfFishAtRandomPosition(this.furtherAwayFish, 100, false);
     this.addAFewRandomPlants(20, false);
+
+    this.toast.show("Could not connect to the server, you're playing offline");
+    setTimeout(() => this.questionManager.start(), 1000);
   }
 
   onMessageFromSocket(data: any) {
@@ -241,6 +257,8 @@ export class Game extends Scene {
         false
       );
       this.addAFewRandomPlants(this.level.numberOfPlants, true);
+
+      setTimeout(() => this.questionManager.start(), 1000);
     } else {
       //RETRY
       setTimeout(() => {
@@ -292,15 +310,26 @@ export class Game extends Scene {
 
   putListeners() {
     this.input.on("pointerdown", (e: any) => {
-      console.log(e)
-      let x=e.event.screenX || e.downX
-      let y=e.event.screenY || e.downY
-      if (x> window.innerWidth * 0.9) {
-        this.scrollX = this.camera.scrollX + 250;
-      } else if (x < window.innerWidth * 0.1) {
-        this.scrollX = this.camera.scrollX - 250;
+      let x = e.event.screenX || e.downX;
+
+      const actualWidth = this.game.scale.displayScale.x * window.innerWidth;
+
+      if (x > actualWidth * 0.9) {
+        this.scrollX += 250;
+      } else if (x < actualWidth * 0.1) {
+        this.scrollX -= 250;
       }
+
+      if (this.scrollX < this.cameraLimitMinX)
+        this.scrollX = this.cameraLimitMinX;
+
+      if (this.scrollX > this.cameraLimitMaxX)
+        this.scrollX = this.cameraLimitMaxX;
     });
+
+    window.onresize = () => {
+      this.handleWindowResize();
+    };
   }
 
   create() {
@@ -316,11 +345,33 @@ export class Game extends Scene {
 
     this.createShader();
     this.putListeners();
+    this.questionManager = new QuestionManager(
+      this,
+      (this.level || {}).questions
+    );
     this.created = true;
   }
 
   setCameraBounds() {
-    this.cameras.main.setBounds(0, 0, this.worldWidth, this.worldHeight);
+    // this.cameras.main.setBounds(
+    //   0,
+    //   0,
+    //   this.worldWidth, //+ window.innerWidth,
+    //   this.worldHeight
+    // );
+
+    this.cameraLimitMaxX =
+      this.worldWidth - window.innerWidth * this.game.scale.displayScale.x - 50;
+    if (this.scrollX > this.cameraLimitMaxX)
+      this.scrollX = this.cameraLimitMaxX;
+  }
+
+  scrollTo(x: number) {
+    this.scrollX = x;
+    if (this.scrollX > this.cameraLimitMaxX)
+      this.scrollX = this.cameraLimitMaxX;
+
+    if (x < 0) this.scrollX = 0;
   }
 
   putPerlinNoiseOnTopOfBg() {
@@ -365,15 +416,9 @@ export class Game extends Scene {
     this.furtherAwayFish.name = "furtherAwayFish";
     this.furtherAwayFish.depth = 1;
   }
-  // handleWindowResize() {
-  //   const canvas = this.game.canvas;
-  //   const width = window.innerWidth;
-  //   const height = window.innerHeight;
-
-  //   // canvas.style.width = `${width}px`;
-  //   // canvas.style.height = `${height}px`;
-  //   // this.game.scale.resize(width, height);
-  // }
+  handleWindowResize() {
+    this.setCameraBounds();
+  }
 
   addABunchOfFishAtRandomPosition(
     container: Phaser.GameObjects.Container | null,

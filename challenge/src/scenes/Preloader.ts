@@ -36,7 +36,11 @@ export class Preloader extends Scene {
   preload() {
     console.log("preloading assets...");
     //  Load the assets for the game - Replace with your own assets
-    this.load.setPath("assets");
+    // this.load.setPath("assets");
+
+    // this.load.font("theFont", "assets/Newyear Coffee.ttf");
+
+
   }
 
   create() {

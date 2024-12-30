@@ -11,14 +11,14 @@
     "escapeFromOtherFishFactor": 0.3,
     "questions": [
         {
-            "question": "what color is the highlighted fish?",
-            "answer": "red",
-            "fishToHighlight": "red"
+            "question": "1 - What color is the highlighted fish?",
+            "answer": "green",
+            "fishToHighlight": "green"
         },
         {
-            "question": "what color is the highlighted fish?",
-            "answer": "yellow",
-            "fishToHighlight": "yellow"
+            "question": "2 - What color is the highlighted fish?",
+            "answer": "orange",
+            "fishToHighlight": "orange"
         }
     ]
 }

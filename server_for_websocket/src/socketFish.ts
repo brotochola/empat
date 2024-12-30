@@ -58,11 +58,11 @@ export class Fish {
     this.grid = grid;
 
     this.fishType = tileIndex;
-    this.maxVel = Math.random() + 2.5;
-    this.maxAcc = Math.random() * 0.3 + 0.1;
+    this.maxVel = Math.random() + 1;
+    this.maxAcc = Math.random() * 0.066 + 0.066;
 
     this.limitX = worldWidth;
-    this.limitY = worldHeight - 250;
+    this.limitY = worldHeight - 300;
   }
 
   applyForce(force: Vector): void {

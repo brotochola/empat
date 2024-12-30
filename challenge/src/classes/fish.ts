@@ -2,6 +2,8 @@ import { Game } from "../scenes/Game";
 import { SpatialHash } from "./grid";
 
 export class Fish extends Phaser.GameObjects.Sprite {
+  highlightSprite: Phaser.GameObjects.Sprite;
+  highlighted: boolean = false;
   acc: Phaser.Math.Vector2 = new Phaser.Math.Vector2(0, 0);
   vel: Phaser.Math.Vector2 = new Phaser.Math.Vector2(
     Math.random() - 0.5,
@@ -43,8 +45,8 @@ export class Fish extends Phaser.GameObjects.Sprite {
     this.scene = scene;
 
     this.fishType = container ? 80 : tileIndex;
-    this.maxVel = Math.random() + 1.5;
-    this.maxAcc = Math.random() * 0.3 + 0.1;
+    this.maxVel = Math.random() + 1;
+    this.maxAcc = Math.random() * 0.066 + 0.066;
 
     this.resetFrame();
     if (container) {
@@ -66,8 +68,42 @@ export class Fish extends Phaser.GameObjects.Sprite {
       });
     }
   }
+
+
   handlePointerDown() {
-    console.log(this.x, this.y, this.limitY);
+    // this.highlight();
+    // console.log(this.fishType)
+  }
+
+  unhighlight() {
+    if (this.highlightSprite) {
+      this.highlightSprite.destroy();
+    }
+    this.highlighted = false;
+  }
+
+  isSpriteInView() {
+    const scroll = this.scene.scrollX;
+
+    return (this.x-scroll)>0 
+
+    // return this.x > scroll && this.x < scroll + window.innerWidth;
+  }
+
+  highlight() {
+    console.log("#highlight", this);
+    if (!this.highlightSprite) {
+      this.highlightSprite = new Phaser.GameObjects.Sprite(
+        this.scene,
+        this.x,
+        this.y,
+        this.scene.textures.get("highlight")
+      );
+
+      this.scene.add.existing(this.highlightSprite);
+    }
+    this.highlighted = true;
+    // this.setTint(0x00ff00);
   }
   resetFrame() {
     let frame = this.frame.clone();
@@ -211,6 +247,10 @@ export class Fish extends Phaser.GameObjects.Sprite {
 
       this.stayWithinBounds(-50, -50, this.limitX, this.limitY);
       this.move();
+    }
+    if (this.highlighted && this.highlightSprite) {
+      this.highlightSprite.x = this.x;
+      this.highlightSprite.y = this.y;
     }
 
     this.adjustAngle();

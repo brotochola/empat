@@ -8,13 +8,80 @@
 
     <title>Facundo Saiegh - Ocean Speak</title>
     <style>
+        @keyframes slingshot {
+            0% {
+                font-size: 5.5vmin;
+                /* Start 125% bigger */
+            }
+
+            60% {
+                font-size: 4.6vmin;
+                /* Overshoot to 90% */
+            }
+
+            80% {
+                font-size: 5.2vmin;
+                /* Slight bounce back */
+            }
+
+            100% {
+                font-size: 5vmin;
+                /* Settle at 100% */
+            }
+        }
+
+        .withSlignShotAnim {
+            animation: slingshot 0.4s ease-in-out;
+        }
+
+        @font-face {
+            font-family: 'TheFontWeUse';
+            src: url('assets/newyearCoffee.ttf') format('truetype');
+        }
+        
+
+        .text {
+            font-family: 'TheFontWeUse';
+            z-index: 99;
+            position: fixed;
+            margin: auto;
+            inset: 0;
+            /* left: 50%; */
+            /* transform: translateX(-50%); */
+            color: yellow;
+            font-size: 5vmin;
+            -webkit-text-stroke: 2px white;
+            user-select: none;
+            touch-action: none;
+            pointer-events: none;
+        }
+
+        .fontPreloader {
+            font-family: 'TheFontWeUse';
+            position: fixed;
+            top: -100vh;
+            left: -100vw;
+        }
+
+        #question {
+            text-shadow: 2px 4px 10px rgba(0, 0, 0, 0.66);
+
+            top: 15%;
+            text-align: center;
+        }
+
         * {
             margin: 0px;
             padding: 0px;
 
         }
 
+        html {
+            overflow: hidden;
+        }
+
         body {
+            overflow: hidden;
             margin: 0;
             padding: 0;
             color: rgba(255, 255, 255, 0.87);
@@ -33,6 +100,7 @@
 </head>
 
 <body>
+    <p class="fontPreloader">a</p>
     <div id="app">
         <div id="game-container"></div>
     </div>
