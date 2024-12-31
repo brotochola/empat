@@ -2,14 +2,24 @@ import { Game, Question } from "../scenes/Game";
 
 const defaultQuestions: Question[] = [
   {
-    question: "what color is the highlighted fish?",
-    answer: "red",
-    fishToHighlight: "red",
+    question: "1 - Say it out loud: What color is the highlighted fish?",
+    answer: "green",
+    fishToHighlight: "green",
   },
   {
-    question: "what color is the highlighted fish?",
+    question: "2 - Say it out loud: What color is the highlighted fish?",
     answer: "orange",
     fishToHighlight: "orange",
+  },
+  {
+    question: "3 - Say it out loud: What color is the highlighted fish?",
+    answer: "pink",
+    fishToHighlight: "pink",
+  },
+  {
+    question: "4 - Say it out loud: What color is the highlighted fish?",
+    answer: "red",
+    fishToHighlight: "red",
   },
 ];
 
@@ -22,6 +32,14 @@ export class QuestionManager {
     brown: 100,
     green: 72,
   };
+  static states: any = {
+    beforeLoading: 0,
+    initialized: 1,
+    waiting: 2,
+    listening: 3,
+    won: 4,
+  };
+  state: string = QuestionManager.states.beforeLoading;
   currentQuestion: number = 0;
   textElement: HTMLParagraphElement;
   finished = false;
@@ -38,7 +56,7 @@ export class QuestionManager {
   start() {
     //THIS IS BECAUSE I NEED A CLICK BEFORE STARTING AUDIO STUFF
     this.showText("Click on the screen to start...");
-
+    this.state = QuestionManager.states.initialized;
     this.scene.game.canvas.onclick = this.scene.game.canvas.ontouchstart =
       () => {
         this.setupSpeechRecognition();
@@ -52,26 +70,40 @@ export class QuestionManager {
     this.recognition = new window.webkitSpeechRecognition();
     this.recognition.lang = "en-US"; // Set the language
     this.recognition.interimResults = false; // Allow partial results
-    this.recognition.continuous = false; // Keep recognizing until stopped
+    this.recognition.continuous = true; // Keep recognizing until stopped
+    this.recognition.onaudiostart = () => {
+      console.log("#audio started");
+    };
     this.recognition.onresult = (result: any) =>
       this.handleResultFromRecognition(result);
-    this.recognition.onerror = (e: any) => console.warn(e);
+    this.recognition.onerror = (e: any) => {
+      console.warn(e);
+      this.scene.toast.show("It took you too long...");
+
+      this.showQuestion();
+    };
 
     console.log("### speech recognition SETUP");
   }
   private handleResultFromRecognition(result: any): void {
     console.log(result);
-    for (let i = 0; i < result.results.length; i++) {
-      let r: any = result.results[i];
-      console.log("###", i);
-      if (r.isFinal) {
-        const text = r[0].transcript;
-        if (text) {
-        
-          this.answerQuestion(text);
-        }
-      }
+    if (result.results.length) {
+      //I JUST GRAB THE FIRST ONE
+      const text = result.results[0][0].transcript;
+
+      this.recognition.stop();
+      this.answerQuestion(text);
     }
+    // // for (let i = 0; i < result.results.length; i++) {
+    //   let r: any = result.results[i];
+
+    //   //   if (r.isFinal) {
+    //   const text = r[0].transcript;
+    //   if (text) {
+    //     this.answerQuestion(text);
+    //   }
+    //   //   }
+    // // }
   }
 
   createTextInScene(): void {
@@ -82,43 +114,71 @@ export class QuestionManager {
     this.textElement.style.display = "none";
   }
 
+  startRecognizing() {
+    this.recognition.stop();
+
+    setTimeout(() => {
+      this.recognition.start();
+      this.scene.toast.show("Listening...");
+      this.state = QuestionManager.states.listening;
+    }, 250);
+  }
+
   showQuestion() {
     console.log("# SHOW QUESTION");
+
     const question = this.questions[this.currentQuestion];
 
     this.showText(question.question);
-    setTimeout(() => this.recognition.start(), 100);
     //IF THE QUESTION HAS A TYPE OF FISH TO HIGHLIGHT
     if (question.fishToHighlight) {
       this.highlightOneFish(question);
     }
+    this.startRecognizing();
   }
 
   highlightOneFish(question: Question) {
+    console.log("# highlighting...", question);
     //WE GET ITS NUMBER
     const fishType = QuestionManager.fishTypes[question.fishToHighlight];
     //FILTER THE FISH THERE ARE IN THE SCENE
-    const potentialFishToHighlight = this.scene.arrOfFish.filter(
+    let potentialFishToHighlight = this.scene.arrOfFish.filter(
       (k) =>
         k.fishType == fishType &&
         !k.bgFish &&
         k.x < this.scene.worldWidth * 0.85 &&
         k.x > this.scene.worldWidth * 0.05
     );
-    //HIGHLIGHT IT
-    if (potentialFishToHighlight.length) {
-      potentialFishToHighlight[0].highlight();
-      this.scene.scrollTo(
-        potentialFishToHighlight[0].x - window.innerWidth * 0.5
+
+    if (!potentialFishToHighlight.length) {
+      potentialFishToHighlight = this.scene.arrOfFish.filter(
+        (k) => k.fishType == fishType && !k.bgFish
       );
-    } else {
-      debugger;
     }
+
+    if (!potentialFishToHighlight.length) {
+      this.whatToDoIfTheresNoFishToHighlight(question);
+      return;
+    }
+    potentialFishToHighlight[0].highlight();
+    this.scene.scrollTo(
+      potentialFishToHighlight[0].x - window.innerWidth * 0.5
+    );
+  }
+
+  whatToDoIfTheresNoFishToHighlight(question: Question) {
+    this.scene.toast.show(
+      "This is akward, there's no fish of the " +
+        question.fishToHighlight +
+        " type. We're skipping this question"
+    );
+    this.currentQuestion++;
+    this.showQuestion();
   }
 
   answerQuestion(answer: string) {
     const question = this.questions[this.currentQuestion];
-    this.scene.toast.show("You said: "+answer);
+    this.scene.toast.show("You said: " + answer);
 
     //TRIM AND LOWER CASE TO COMPARE STRINGS WITHOUT ISSUES
     if (answer.toLowerCase().trim() == question.answer.toLowerCase().trim()) {
@@ -133,7 +193,7 @@ export class QuestionManager {
 
   wrongAnswer() {
     this.showText("WRONG ANSWER :(");
-
+    this.state = QuestionManager.states.waiting;
     setTimeout(() => {
       this.scene.unhighlightAllFish();
       this.textElement.style.display = "none";
@@ -142,6 +202,7 @@ export class QuestionManager {
   }
   correctAnswer() {
     this.showText("CORRECT!");
+    this.state = QuestionManager.states.waiting;
     setTimeout(() => {
       this.scene.unhighlightAllFish();
       this.textElement.style.display = "none";
@@ -170,7 +231,17 @@ export class QuestionManager {
   }
 
   youWon() {
+    this.state = QuestionManager.states.won;
     this.textElement.innerText = "YOU WON!";
     this.textElement.style.display = "block";
+  }
+
+  getStateAsString(): string {
+    for (const [key, value] of Object.entries(QuestionManager.states)) {
+      if (value === this.state) {
+        return key;
+      }
+    }
+    return "Unknown state";
   }
 }

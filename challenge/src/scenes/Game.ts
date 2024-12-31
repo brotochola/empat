@@ -312,11 +312,13 @@ export class Game extends Scene {
     this.input.on("pointerdown", (e: any) => {
       let x = e.event.screenX || e.downX;
 
-      const actualWidth = this.game.scale.displayScale.x * window.innerWidth;
+      // const actualWidth =this.game.scale.displayScale.x * window.innerWidth;
+      const actualWidth = window.innerWidth;
 
-      if (x > actualWidth * 0.9) {
+      console.log(x/actualWidth, x, actualWidth,window.innerWidth)
+      if (x > actualWidth * 0.8) {
         this.scrollX += 250;
-      } else if (x < actualWidth * 0.1) {
+      } else if (x < actualWidth * 0.2) {
         this.scrollX -= 250;
       }
 

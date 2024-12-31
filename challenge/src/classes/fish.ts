@@ -2,7 +2,7 @@ import { Game } from "../scenes/Game";
 import { SpatialHash } from "./grid";
 
 export class Fish extends Phaser.GameObjects.Sprite {
-  highlightSprite: Phaser.GameObjects.Sprite;
+  highlightSprite: Phaser.GameObjects.Sprite | null;
   highlighted: boolean = false;
   acc: Phaser.Math.Vector2 = new Phaser.Math.Vector2(0, 0);
   vel: Phaser.Math.Vector2 = new Phaser.Math.Vector2(
@@ -69,7 +69,6 @@ export class Fish extends Phaser.GameObjects.Sprite {
     }
   }
 
-
   handlePointerDown() {
     // this.highlight();
     // console.log(this.fishType)
@@ -78,6 +77,7 @@ export class Fish extends Phaser.GameObjects.Sprite {
   unhighlight() {
     if (this.highlightSprite) {
       this.highlightSprite.destroy();
+      this.highlightSprite = null;
     }
     this.highlighted = false;
   }
@@ -85,7 +85,7 @@ export class Fish extends Phaser.GameObjects.Sprite {
   isSpriteInView() {
     const scroll = this.scene.scrollX;
 
-    return (this.x-scroll)>0 
+    return this.x - scroll > 0;
 
     // return this.x > scroll && this.x < scroll + window.innerWidth;
   }
