@@ -1,3 +1,6 @@
+EmpatSpeech Test.
+
+
 # INSTRUCTIONS:
 
 1 - clone the repo
@@ -15,17 +18,9 @@
 # TODO
 
 - implement bubbles in a particle system on click
-
-- check if webgl works before putting the filters, bc in my phone it doesnt work
-
-
-- implement speechRecognition to answer to the questions
-
-- have a method in the game that simulates recieving a new level (have some tooltip showing)
-
 - implement bitmapfont and show numbers like points
 
-- add ui
+
 
 - add comments
 - make sure everything is loading when it has to
@@ -34,9 +29,6 @@
 
 
 
-- make sure fish dont go too far from the screen limit
-
-- make bg fish all the same type -it will look better and it will be more like the other fish' behaviour
 
 
 # NICE TO HAVE:
@@ -45,9 +37,5 @@
 - day cycle
 - "shark" in the background, inherits from fish, type bgfish, all the other fish avoid it.
 
-# POSSIBLE QUESTIONS:
-what color is the highlighted fish?
-what color is the highlighted plant?
-how many red fish are there?
-how many rocks are there?
+
 
