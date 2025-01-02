@@ -55,6 +55,7 @@ export class Game extends Scene {
   wsConnection: WebSocketConnection;
   created: boolean = false;
   ready: boolean = false;
+  particleEmitter: Phaser.GameObjects.Particles.ParticleEmitter;
 
   cameraLimitMinX = 0;
   cameraLimitMaxX = this.worldWidth - window.innerWidth;
@@ -80,7 +81,26 @@ export class Game extends Scene {
     this.bgSound = new Audio("assets/sounds/bg.mp3");
     this.bgSound.loop = true;
     this.bgSound.play();
-    this.bgSound.volume=0.3
+    this.bgSound.volume = 0.3;
+  }
+
+  addParticleEmitter() {
+    // / Create a particle manager
+
+    this.particleEmitter = this.add.particles(300, 300, "spritesheet", {
+      frame: 123, // Match the frame index from the spritesheet
+
+      speedX: { min: -50, max: 50 },
+      speedY: { min: -100, max: -200 },
+      lifespan: 8000,
+      scale: { start: 0.3, end: 1.2 },
+      angle: { min: -110, max: -80 },
+      alpha: { min: 0, max: 0.7, end: 0 },
+      blendMode: "ADD",
+      quantity: 1, // Number of particles emitted at once
+    });
+    this.particleEmitter.stop();
+    this.particleEmitter.depth = 3;
   }
 
   // loadFish() {
@@ -320,11 +340,12 @@ export class Game extends Scene {
   putListeners() {
     this.input.on("pointerdown", (e: any) => {
       let x = e.event.screenX || e.downX;
+      let y = e.event.screenY || e.downY;
 
       // const actualWidth =this.game.scale.displayScale.x * window.innerWidth;
       const actualWidth = window.innerWidth;
 
-      console.log(x / actualWidth, x, actualWidth, window.innerWidth);
+      console.log(e);
       if (x > actualWidth * 0.8) {
         this.scrollX += 250;
       } else if (x < actualWidth * 0.2) {
@@ -336,11 +357,24 @@ export class Game extends Scene {
 
       if (this.scrollX > this.cameraLimitMaxX)
         this.scrollX = this.cameraLimitMaxX;
+
+      this.emitBubbles(e.worldX - 300, e.worldY - 300,10);
     });
 
     window.onresize = () => {
       this.handleWindowResize();
     };
+  }
+
+  emitBubbles(x: number, y: number, numberOfBubble: number = 1): void {
+    // this.particleEmitter.x = x + this.scrollX;
+    // this.particleEmitter.y = y;
+    // this.particleEmitter.visible = true;
+    // const scale = this.game.scale.displayScale.x;
+    // const x = e.event.screenX;
+    // const y = e.event.screenY;
+    this.particleEmitter.emitParticleAt(x, y, numberOfBubble);
+    // setTimeout(() => this.particleEmitter.stop(), 500);
   }
 
   create() {
@@ -360,6 +394,8 @@ export class Game extends Scene {
       this,
       (this.level || {}).questions
     );
+
+    this.addParticleEmitter();
     this.created = true;
   }
 

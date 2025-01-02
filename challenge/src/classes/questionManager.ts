@@ -53,8 +53,8 @@ export class QuestionManager {
       this.questions = defaultQuestions;
     }
 
-    this.correctFX.volume=0.25
-    this.wrongFX.volume=0.5
+    this.correctFX.volume = 0.1;
+    this.wrongFX.volume = 0.3;
 
     this.createTextInScene();
   }
@@ -199,7 +199,7 @@ export class QuestionManager {
 
   wrongAnswer() {
     this.showText("WRONG ANSWER :(");
-    this.wrongFX.play()
+    this.wrongFX.play();
     this.state = QuestionManager.states.waiting;
     setTimeout(() => {
       this.scene.unhighlightAllFish();
@@ -207,9 +207,19 @@ export class QuestionManager {
       setTimeout(() => this.showQuestion(), 1000);
     }, 1500);
   }
+  emitALotOfBubbles() {
+    let x = 500 + this.scene.scrollX;
+    let y = -80;
+    this.scene.emitBubbles(x, y, 50);
+    for (let i = 0; i < 10; i++) {
+      setTimeout(() => this.scene.emitBubbles(x + i * 30, y, 70), i * 50);
+    }
+  }
   correctAnswer() {
     this.showText("CORRECT!");
-    this.correctFX.play()
+    this.correctFX.play();
+    this.emitALotOfBubbles();
+
     this.state = QuestionManager.states.waiting;
     setTimeout(() => {
       this.scene.unhighlightAllFish();

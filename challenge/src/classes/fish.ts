@@ -29,6 +29,8 @@ export class Fish extends Phaser.GameObjects.Sprite {
   maxVel: number;
   maxAcc: number;
   connectedToSocket: boolean;
+  // maxLuckyNumbers = 20;
+  // myLuckyNumber = Math.floor(Math.random() * this.maxLuckyNumbers);
 
   constructor(
     scene: Game,
@@ -261,7 +263,13 @@ export class Fish extends Phaser.GameObjects.Sprite {
     //   debugger
     // }
 
+    this.emitBubbles();
     this.playSoundOnceAWhile();
+  }
+
+  emitBubbles(): void {
+    if (Math.random() < 0.999) return;
+    this.scene.emitBubbles(this.x, this.y, Math.floor(Math.random() * 3));
   }
 
   playSoundOnceAWhile() {
@@ -269,7 +277,7 @@ export class Fish extends Phaser.GameObjects.Sprite {
     //   this.fishSoundManager.playSoundWithRandomPitch();
     // }
 
-    if( Math.random() < 0.66) return
+    if (Math.random() < 0.66) return;
 
     const changeVelLimit = 1.55;
 
@@ -279,7 +287,7 @@ export class Fish extends Phaser.GameObjects.Sprite {
 
     // const isItVisible=this.x
 
-    if (didChangeVelFast && this.amIInTheFrame() ) {
+    if (didChangeVelFast && this.amIInTheFrame()) {
       this.fishSoundManager.playSoundWithRandomPitch();
     }
   }
