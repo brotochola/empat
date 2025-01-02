@@ -45,10 +45,16 @@ export class QuestionManager {
   finished = false;
   recognition: any;
 
+  correctFX: HTMLAudioElement = new Audio("assets/sounds/correct.mp3");
+  wrongFX: HTMLAudioElement = new Audio("assets/sounds/wrong.mp3");
+
   constructor(private scene: Game, private questions: Question[]) {
     if (!questions) {
       this.questions = defaultQuestions;
     }
+
+    this.correctFX.volume=0.25
+    this.wrongFX.volume=0.5
 
     this.createTextInScene();
   }
@@ -193,6 +199,7 @@ export class QuestionManager {
 
   wrongAnswer() {
     this.showText("WRONG ANSWER :(");
+    this.wrongFX.play()
     this.state = QuestionManager.states.waiting;
     setTimeout(() => {
       this.scene.unhighlightAllFish();
@@ -202,6 +209,7 @@ export class QuestionManager {
   }
   correctAnswer() {
     this.showText("CORRECT!");
+    this.correctFX.play()
     this.state = QuestionManager.states.waiting;
     setTimeout(() => {
       this.scene.unhighlightAllFish();

@@ -40,10 +40,10 @@ export class Fish {
     grid: SpatialHash<Fish>,
     worldWidth: number,
     worldHeight: number,
-    cohesionFactor: number = 0.2,
+    cohesionFactor: number = 0.22,
     alignmentFactor: number = 0.6,
     separationFactor: number = 0.33,
-    escapeFromOtherFishFactor: number = 0.3
+    escapeFromOtherFishFactor: number = 0.2
   ) {
     this.cohesionFactor = cohesionFactor;
     this.alignmentFactor = alignmentFactor;
@@ -62,7 +62,7 @@ export class Fish {
     this.maxAcc = Math.random() * 0.066 + 0.066;
 
     this.limitX = worldWidth;
-    this.limitY = worldHeight - 300;
+    this.limitY = worldHeight - 200;
   }
 
   applyForce(force: Vector): void {

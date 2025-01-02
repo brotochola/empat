@@ -33,6 +33,7 @@ type Level = {
 
 export class Game extends Scene {
   questionManager: QuestionManager;
+  bgSound: HTMLAudioElement;
   toast: Toast = new Toast();
   camera: Phaser.Cameras.Scene2D.Camera;
   background: Phaser.GameObjects.Image;
@@ -72,6 +73,14 @@ export class Game extends Scene {
     super("Game");
     window.g = this;
     this.spatialHash = new SpatialHash<Fish>(100);
+    this.createBGAudioAndPlay();
+  }
+
+  createBGAudioAndPlay() {
+    this.bgSound = new Audio("assets/sounds/bg.mp3");
+    this.bgSound.loop = true;
+    this.bgSound.play();
+    this.bgSound.volume=0.3
   }
 
   // loadFish() {
@@ -315,7 +324,7 @@ export class Game extends Scene {
       // const actualWidth =this.game.scale.displayScale.x * window.innerWidth;
       const actualWidth = window.innerWidth;
 
-      console.log(x/actualWidth, x, actualWidth,window.innerWidth)
+      console.log(x / actualWidth, x, actualWidth, window.innerWidth);
       if (x > actualWidth * 0.8) {
         this.scrollX += 250;
       } else if (x < actualWidth * 0.2) {

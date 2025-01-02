@@ -1,8 +1,10 @@
 import { Game } from "../scenes/Game";
+import { fishSounds } from "./fishSounds";
 import { SpatialHash } from "./grid";
 
 export class Fish extends Phaser.GameObjects.Sprite {
   highlightSprite: Phaser.GameObjects.Sprite | null;
+  fishSoundManager: fishSounds;
   highlighted: boolean = false;
   acc: Phaser.Math.Vector2 = new Phaser.Math.Vector2(0, 0);
   vel: Phaser.Math.Vector2 = new Phaser.Math.Vector2(
@@ -40,6 +42,7 @@ export class Fish extends Phaser.GameObjects.Sprite {
   ) {
     super(scene, x, y, tilesetKey, container ? 80 : tileIndex);
 
+    this.fishSoundManager = new fishSounds(this);
     this.connectedToSocket = connectedToSocket;
     this.grid = grid;
     this.scene = scene;
@@ -257,6 +260,32 @@ export class Fish extends Phaser.GameObjects.Sprite {
     // if(this.vel.x<0.00001 && time>5000){
     //   debugger
     // }
+
+    this.playSoundOnceAWhile();
+  }
+
+  playSoundOnceAWhile() {
+    // if (Math.random() > 0.999) {
+    //   this.fishSoundManager.playSoundWithRandomPitch();
+    // }
+
+    if( Math.random() < 0.66) return
+
+    const changeVelLimit = 1.55;
+
+    const didChangeVelFast =
+      Math.abs(this.lastVel.x - this.vel.x) > changeVelLimit ||
+      Math.abs(this.lastVel.y - this.vel.y) > changeVelLimit;
+
+    // const isItVisible=this.x
+
+    if (didChangeVelFast && this.amIInTheFrame() ) {
+      this.fishSoundManager.playSoundWithRandomPitch();
+    }
+  }
+
+  amIInTheFrame() {
+    return this.scene.camera.worldView.contains(this.x, this.y);
   }
 
   repelOtherFish() {
