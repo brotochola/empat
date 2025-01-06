@@ -227,6 +227,7 @@ export class Fish {
     )
       return;
 
+      // console.log("moveRandomly")
     let x = Math.sin(this.time * 0.001) + (Math.random() - 0.5) * 0.01;
     let y = Math.cos(this.time * 0.001) + (Math.random() - 0.5) * 0.01;
 

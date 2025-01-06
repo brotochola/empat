@@ -96,7 +96,7 @@ export class Fish extends Phaser.GameObjects.Sprite {
   }
 
   highlight() {
-    console.log("#highlight", this);
+    // console.log("#highlight", this);
     if (!this.highlightSprite) {
       this.highlightSprite = new Phaser.GameObjects.Sprite(
         this.scene,
@@ -240,6 +240,10 @@ export class Fish extends Phaser.GameObjects.Sprite {
     this.grid.insert(this);
 
     if (!this.connectedToSocket) {
+      //AS A WAY TO OPTIMIZE THESE CALCULATIONS, I COULD HAVE ASSIGNED A NUMBER FROM 1 TO 4 TO EACH FISH
+      //AND ONLY DO THE EXPENSIVE CALCULATIONS IF THE this.scene.frameCount%this.myNum==0
+      //BUT I THINK IT'S NOT NECESSARY FOR THIS EXAMPLE
+      // if (this.scene.frameCount % 2 == 0) {
       this.getFishCloseToMe();
       this.alignment();
 
@@ -249,6 +253,7 @@ export class Fish extends Phaser.GameObjects.Sprite {
       this.repelOtherFish();
 
       this.moveRandomly();
+      // }
 
       this.stayWithinBounds(-50, -50, this.limitX, this.limitY);
       this.move();
@@ -273,8 +278,6 @@ export class Fish extends Phaser.GameObjects.Sprite {
   }
 
   playSoundOnceAWhile() {
-  
-
     if (Math.random() < 0.66) return;
 
     const changeVelLimit = 1.55;
@@ -319,7 +322,7 @@ export class Fish extends Phaser.GameObjects.Sprite {
     )
       return;
 
-    let x = Math.sin(this.time * 0.001) + (Math.random() - 0.5) * 0.01;
+    let x = Math.sin(this.time * 0.001+Math.random()) + (Math.random() - 0.5) * 0.01;
     let y = Math.cos(this.time * 0.001) + (Math.random() - 0.5) * 0.01;
 
     this.applyForce(new Phaser.Math.Vector2(x, y));

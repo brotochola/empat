@@ -40,6 +40,7 @@ export class Game extends Scene {
   timeOfDay = 0.5;
   dayColor: any;
   nightColor: any;
+  frameCount = 0;
 
   gradientTexture: Phaser.Textures.CanvasTexture | null;
   ctx: CanvasRenderingContext2D;
@@ -123,16 +124,6 @@ export class Game extends Scene {
     this.particleEmitter.depth = 3;
   }
 
-  // loadFish() {
-  //   let size = 70;
-  //   for (let i = 1; i < 127; i++) {
-  //     let name = "fishTile_" + formatNumber(i) + ".png";
-  //     let x = (i % 20) * size + size;
-  //     let y = Math.floor(i / 10) * size + size;
-  //     this.fish = this.add.sprite(x, y, "spritesheetWithEverything", name);
-  //   }
-  // }
-
   addFishFromTheTileSet(
     x: number,
     y: number,
@@ -196,14 +187,14 @@ export class Game extends Scene {
 
   preload() {
     this.createBGAudioAndPlay();
+    this.load.image("highlight", "assets/highlight.png");
 
     this.load.spritesheet("spritesheet", "assets/tilemap/fishTilesheet.png", {
       frameWidth: 64,
       frameHeight: 64,
     });
-    this.load.image("highlight", "assets/highlight.png");
 
-    this.load.image("tileset", "assets/tilemap/fishTilesheet.png");
+    // this.load.image("tileset", "assets/tilemap/fishTilesheet.png");
     this.load.tilemapTiledJSON("map", "assets/tilemap/map_editor_file.json");
 
     this.load.image("noise", "assets/noise.png");
@@ -314,7 +305,7 @@ export class Game extends Scene {
 
     //load the tile map created with Tiled and add layers
 
-    const tileset = map.addTilesetImage("fishTilesheet", "tileset")!;
+    const tileset = map.addTilesetImage("fishTilesheet", "spritesheet")!;
     if (tileset) {
       this.sandLayer3 = map.createLayer("darker sand 2", tileset, 0, 0);
 
@@ -544,7 +535,7 @@ export class Game extends Scene {
   }
 
   updateDayNightCycle(time: number = 0) {
-    const dayNightSpeed = 0.0005;
+    const dayNightSpeed = 0.0002;
     this.timeOfDay = Math.sin(dayNightSpeed * (time + 2000)) * 0.5 + 0.5;
 
     //BY SETTING A BLACK TINT ON THE WATERNOISE, I CAN MAKE EVERYTHING SLIGHTLY DARKER
@@ -559,6 +550,7 @@ export class Game extends Scene {
   update(time: number, delta: number) {
     //if the game is not ready, nothing updates yet
     if (!this.ready) return;
+    this.frameCount++;
 
     //clear the grid, each fish will update its position on every frame
     this.spatialHash.clear();
@@ -588,7 +580,9 @@ export class Game extends Scene {
 
     //WAVY EFFECT
     this.updateFilter();
-    this.updateDayNightCycle(time);
+
+    //I feel this was getting a bit heavy, so once every other frame
+    if (this.frameCount % 4 == 0) this.updateDayNightCycle(time);
   }
 
   updateFilter() {

@@ -10,7 +10,7 @@ export class fishSounds {
       // aud.volume = 0.02;
       fishSounds.sounds.push(aud);
     }
-    console.log(this);
+    
   }
   constructor(private fish: Fish) {
     // window.fishSounds = fishSounds;
