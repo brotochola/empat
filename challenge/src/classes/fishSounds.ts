@@ -10,7 +10,6 @@ export class fishSounds {
       // aud.volume = 0.02;
       fishSounds.sounds.push(aud);
     }
-    
   }
   constructor(private fish: Fish) {
     // window.fishSounds = fishSounds;
@@ -26,16 +25,18 @@ export class fishSounds {
   playSoundWithRandomPitch() {
     const s = this.getRandomBubbleSoundFromMySounds();
 
-    s.playbackRate = Math.random()  + 0.25;
-    s.volume = Math.random() * 0.02;
+    s.playbackRate = Math.random() * 0.2 + 0.9;
+    s.volume = Math.random() * 0.011;
     // s.pan
     s.play();
   }
 
   static getRandomBubbleSound(): HTMLAudioElement {
-    return fishSounds.sounds[
-      Math.floor(fishSounds.sounds.length * Math.random())
-    ];
+    return new Audio(
+      fishSounds.sounds[
+        Math.floor(fishSounds.sounds.length * Math.random())
+      ].src
+    );
   }
 
   getRandomBubbleSoundFromMySounds(): HTMLAudioElement {

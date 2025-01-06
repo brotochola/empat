@@ -268,28 +268,29 @@ export class Fish extends Phaser.GameObjects.Sprite {
     //   debugger
     // }
 
-    this.emitBubbles();
-    this.playSoundOnceAWhile();
+    this.emitBubblesAndSound();
   }
 
-  emitBubbles(): void {
-    if (Math.random() < 0.999) return;
-    this.scene.emitBubbles(this.x, this.y, Math.floor(Math.random() * 3));
-  }
+  // emitBubblesAndSound(): void {
+  //   // if (Math.random() < 0.999) return;
+  //   this.playSoundOnceAWhile();
+  // }
 
-  playSoundOnceAWhile() {
-    if (Math.random() < 0.66) return;
+  emitBubblesAndSound() {
+    if ((this.scene.frameCount + this.fishType) % 2 == 0) return;
+    if (Math.random() < 0.996) return;
 
-    const changeVelLimit = 1.55;
+    // const changeVelLimit = 1.9;
 
-    const didChangeVelFast =
-      Math.abs(this.lastVel.x - this.vel.x) > changeVelLimit ||
-      Math.abs(this.lastVel.y - this.vel.y) > changeVelLimit;
+    // const didChangeVelFast =
+    //   Math.abs(this.lastVel.x - this.vel.x) > changeVelLimit ||
+    //   Math.abs(this.lastVel.y - this.vel.y) > changeVelLimit;
 
     // const isItVisible=this.x
 
-    if (didChangeVelFast && this.amIInTheFrame()) {
+    if (this.amIInTheFrame()) {
       this.fishSoundManager.playSoundWithRandomPitch();
+      this.scene.emitBubbles(this.x, this.y, Math.floor(Math.random() * 3));
     }
   }
 
@@ -322,7 +323,9 @@ export class Fish extends Phaser.GameObjects.Sprite {
     )
       return;
 
-    let x = Math.sin(this.time * 0.001+Math.random()) + (Math.random() - 0.5) * 0.01;
+    let x =
+      Math.sin(this.time * 0.001 + Math.random()) +
+      (Math.random() - 0.5) * 0.01;
     let y = Math.cos(this.time * 0.001) + (Math.random() - 0.5) * 0.01;
 
     this.applyForce(new Phaser.Math.Vector2(x, y));

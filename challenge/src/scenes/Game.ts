@@ -94,7 +94,7 @@ export class Game extends Scene {
 
   constructor() {
     super("Game");
-    window.g = this;
+    (window as any).g = this;
     this.spatialHash = new SpatialHash<Fish>(100);
   }
 
@@ -109,8 +109,7 @@ export class Game extends Scene {
     // / Create a particle manager
 
     this.particleEmitter = this.add.particles(300, 300, "spritesheet", {
-      frame: 123, // Match the frame index from the spritesheet
-
+      frame: 123,
       speedX: { min: -50, max: 50 },
       speedY: { min: -100, max: -200 },
       lifespan: 8000,
@@ -118,7 +117,7 @@ export class Game extends Scene {
       angle: { min: -110, max: -80 },
       alpha: { min: 0, max: 0.7, end: 0 },
       blendMode: "ADD",
-      quantity: 1, // Number of particles emitted at once
+      quantity: 1,
     });
     this.particleEmitter.stop();
     this.particleEmitter.depth = 3;

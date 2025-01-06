@@ -17,16 +17,7 @@ EmpatSpeech Test.
 
 # TODO
 
-- fx: each fish, bubbles, random pitch, pan according to x
-- implement bubbles in a particle system on click
-- implement bitmapfont and show numbers like points
 
-
-
-- add comments
-- make sure everything is loading when it has to
-
-- add random rocks at start
 
 
 
