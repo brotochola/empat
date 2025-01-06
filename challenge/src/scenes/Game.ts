@@ -210,6 +210,15 @@ export class Game extends Scene {
   }
 
   connectToWebSocket() {
+    if (
+      window.location.protocol == "https:" &&
+      window.location.href.includes("github.io")
+    ) {
+      //WE'RE PROBABLY ON GITHUB
+      this.whatToDoIfWebSocketDidntWork();
+      return;
+    }
+
     this.wsConnection = new WebSocketConnection(
       "ws://" + getURLWithNoPortAndProtocol() + ":8080",
       (data: any) => {
