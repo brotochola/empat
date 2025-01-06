@@ -38,3 +38,17 @@ export function mobileCheck() {
 export function getURLWithNoPortAndProtocol(){
   return window.location.href.replace("http://","").replace("https://","").replace(":3000","").replace("/","")
 }
+
+
+export const interpolate = (start: number, end: number, factor: number) =>
+  start + (end - start) * factor;
+
+
+export function getColorFromRange(value:number) {
+  // Clamp the input value between 0 and 1
+  value = Phaser.Math.Clamp(value, 0, 1);
+
+  // Calculate the color based on the input value
+  const intensity = Math.round(value * 255); // Scale to 0-255 range
+  return (intensity << 16) | (intensity << 8) | intensity; // Combine RGB channels
+}

@@ -68,12 +68,6 @@ let time = 0;
     }
   }
 
-  // const fish: Fish[] = Array.from({ length: level1!.numberOfFish }, (): Fish => ({
-  //   type: fishInTileMap[Math.floor(Math.random() * fishInTileMap.length)],
-  //   x: Math.random() * level1.worldWidth,
-  //   y: Math.random() * level1.worldHeight,
-  // }));
-
   // Update fish positions using simple movement logic
   function updateFish(): void {
     grid.clear();

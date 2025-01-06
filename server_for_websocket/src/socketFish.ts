@@ -4,6 +4,7 @@ import { distanceBetween } from "./utils";
 import { Vector } from "./vector";
 
 export class Fish {
+  //THESE ARE THE FISH THAT RUN ON THE NODE SERVER
   acc: Vector = new Vector(0, 0);
   vel: Vector = new Vector(Math.random() - 0.5, Math.random() - 0.5);
 
@@ -62,7 +63,7 @@ export class Fish {
     this.maxAcc = Math.random() * 0.066 + 0.066;
 
     this.limitX = worldWidth;
-    this.limitY = worldHeight - 200;
+    this.limitY = worldHeight - 300;
   }
 
   applyForce(force: Vector): void {
@@ -185,23 +186,20 @@ export class Fish {
 
     // if (!this.connectedToSocket) {
     this.getFishCloseToMe();
-    this.alignment();
 
+    //BOIDS ALGORITHM / CLOCKING SIMULATOR / FISH SCHOOLING
+    this.alignment();
     this.separation();
     this.cohesion();
 
+    //ALSO THE FISH WILL REPEL FISH THAT ARE NOT THEIR TYPE
     this.repelOtherFish();
-
+    //AND MOVE RANDOMLY IF THERE'S NO OTHER FISH CLOSE TO THEM
     this.moveRandomly();
-
+    //IF THEY'RE LEAVING THE WORLD, MAKE THEM COME BACK
     this.stayWithinBounds(-50, -50, this.limitX, this.limitY);
+    //APPLY THE FORCES, UPDATE VELOCITY VECTOR, POSITION VECTOR, ETC, NEWTON STUFF
     this.move();
-    // }
-
-    // this.adjustAngle();
-    // if(this.vel.x<0.00001 && time>5000){
-    //   debugger
-    // }
   }
 
   repelOtherFish() {
@@ -245,31 +243,5 @@ export class Fish {
     };
   }
 
-  // adjustAngle() {
-  //   // Flip horizontally based on velocity direction
-  //   this.scaleX = this.vel.x < 0 ? -1 : 1;
 
-  //   // Ensure rotation stays within ±90 degrees
-  //   const angle = Math.atan2(this.vel.y, Math.abs(this.vel.x));
-  //   this.rotation =
-  //     Phaser.Math.Clamp(angle, -Math.PI / 2, Math.PI / 2) * this.scaleX;
-
-  //   // if (this.vel.x > 0) this.scaleX = -1;
-  //   // this.rotation = Math.atan2(this.vel.y, this.vel.x) % Math.PI*0.5;
-  // }
-
-  updatePositionFromSocket(data: any) {
-    //I SAVE THE LAST POSITION AND VELOCITY TO INTERPOLATE
-    this.lastPos.x = this.x;
-    this.lastPos.y = this.y;
-
-    this.lastVel.x = this.vel.x;
-    this.lastVel.y = this.vel.y;
-
-    this.x = data.x;
-    this.y = data.y;
-
-    this.vel.x = data.vx;
-    this.vel.y = data.vy;
-  }
 }

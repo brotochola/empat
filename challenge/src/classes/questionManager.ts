@@ -66,31 +66,44 @@ export class QuestionManager {
     this.scene.game.canvas.onclick = this.scene.game.canvas.ontouchstart =
       () => {
         this.setupSpeechRecognition();
-        this.showQuestion();
+        if (this.recognition) this.showQuestion();
+        else{
+          this.showText("Browser not supported");
+        }
         this.scene.game.canvas.onclick = this.scene.game.canvas.ontouchstart =
           null;
       };
   }
 
   setupSpeechRecognition() {
-    this.recognition = new window.webkitSpeechRecognition();
-    this.recognition.lang = "en-US"; // Set the language
-    this.recognition.interimResults = false; // Allow partial results
-    this.recognition.continuous = true; // Keep recognizing until stopped
-    this.recognition.onaudiostart = () => {
-      console.log("#audio started");
-    };
-    this.recognition.onresult = (result: any) =>
-      this.handleResultFromRecognition(result);
-    this.recognition.onerror = (e: any) => {
-      console.warn(e);
-      this.scene.toast.show("It took you too long...");
+    //I'm using the speech recognition API, it does not work on Safari or Firefox
+    try {
+      this.recognition = new window.webkitSpeechRecognition();
+      this.recognition.lang = "en-US"; // Set the language
+      this.recognition.interimResults = false; // Allow partial results
+      this.recognition.continuous = true; // Keep recognizing until stopped
+      this.recognition.onaudiostart = () => {
+        console.log("#audio started");
+      };
+      this.recognition.onresult = (result: any) =>
+        this.handleResultFromRecognition(result);
+      this.recognition.onerror = (e: any) => {
+        console.warn(e);
+        this.scene.toast.show("It took you too long...");
 
-      this.showQuestion();
-    };
+        this.showQuestion();
+      };
+    } catch (e) {
+      console.warn("NO SPEECH RECOGNITION API");
+      this.scene.toast.show(
+        "Speech Recognition is not available on this browser, try again with Chrome",
+        9999
+      );
+    }
 
     console.log("### speech recognition SETUP");
   }
+
   private handleResultFromRecognition(result: any): void {
     console.log(result);
     if (result.results.length) {
@@ -187,7 +200,9 @@ export class QuestionManager {
     this.scene.toast.show("You said: " + answer);
 
     //TRIM AND LOWER CASE TO COMPARE STRINGS WITHOUT ISSUES
-    if (answer.toLowerCase().trim() == question.answer.toLowerCase().trim()) {
+    if (
+      answer.toLowerCase().indexOf(question.answer.toLowerCase().trim()) > -1
+    ) {
       console.log("#CORRECT");
 
       this.correctAnswer();

@@ -4,7 +4,12 @@ import { SpatialHash } from "../classes/grid";
 import { Plant } from "../classes/plant";
 import { WebSocketConnection } from "../webSocketConnection";
 import { Toast } from "../classes/toast";
-import { getURLWithNoPortAndProtocol, mobileCheck } from "../utils";
+import {
+  getColorFromRange,
+  getURLWithNoPortAndProtocol,
+  interpolate,
+  mobileCheck,
+} from "../utils";
 import { QuestionManager } from "../classes/questionManager";
 
 export type Question = {
@@ -32,49 +37,64 @@ type Level = {
 };
 
 export class Game extends Scene {
+  timeOfDay = 0.5;
+  dayColor: any;
+  nightColor: any;
+
+  gradientTexture: Phaser.Textures.CanvasTexture | null;
+  ctx: CanvasRenderingContext2D;
+  //With the QuestionManager class i manage the game logic, questions, and so on
   questionManager: QuestionManager;
+  //the background sound is a simple html audio element
   bgSound: HTMLAudioElement;
+  //with a little help from my friend gpt, I quickly created a class to handle quick messages to be shown to the user
   toast: Toast = new Toast();
   camera: Phaser.Cameras.Scene2D.Camera;
-  background: Phaser.GameObjects.Image;
-  msg_text: Phaser.GameObjects.Text;
-  fish: Phaser.GameObjects.Sprite;
-  bg: Phaser.GameObjects.Sprite;
+  bg: Phaser.GameObjects.Image;
   sandLayer1: Phaser.Tilemaps.TilemapLayer | null;
   sandLayer2: Phaser.Tilemaps.TilemapLayer | null;
   sandLayer3: Phaser.Tilemaps.TilemapLayer | null;
+  //This is a perlin noise sprite to make the water have some texure, it looks cool.
   waterNoise: Phaser.GameObjects.TileSprite;
+  //another texture for the water
   waterNoise2: Phaser.GameObjects.TileSprite;
+  //arr of fish in the front, these are the interactive fish, the ones that the server manages, if connected
   arrOfFish: Fish[] = [];
+  //these fish are not interactive, they're in the background, only to make the enviroment look nicer
   arrOfBGFish: Fish[] = [];
+  //plants, they are not interactive. The same architecture could have been used for the plants: have the server running them.
+  //maybe make the fish eat them...
   arrOfPlants: Plant[] = [];
-  worldWidth: number = 3840; //THESE ARE DEFAULT VALUES THAT WILL BE OVERRITEN BY THE SOCKET CONNECTION
+  //THESE ARE DEFAULT VALUES THAT WILL BE OVERRITEN BY THE SOCKET CONNECTION
+  worldWidth: number = 3840;
   worldHeight: number = 1080;
+  //grid for the fish... if the frontend is not connected to the server, the fish run in the frontend,
+  // and the spatial hashing is used. if not, it is only used for the background fish.
   spatialHash: SpatialHash<Fish>;
+  //ScrollX keeps the value of the camera position
   scrollX: number = 0;
   wsConnection: WebSocketConnection;
   created: boolean = false;
   ready: boolean = false;
+  //the particle emitter is used for the bubbles
   particleEmitter: Phaser.GameObjects.Particles.ParticleEmitter;
 
   cameraLimitMinX = 0;
   cameraLimitMaxX = this.worldWidth - window.innerWidth;
-
+  //the level the game currently uses, it can be updated over the socket connection
   level: Level;
-
+  //a container for the background fish
   furtherAwayFish: Phaser.GameObjects.Container;
   plantsContainer: Phaser.GameObjects.Container;
 
-  // shader: Phaser.GameObjects.Shader;
-
+  //the whole game has this effect
+  //the very simple UI for this example was done with html and css
   fx: Phaser.FX.Displacement;
-  // waterNoisefX: Phaser.FX.Displacement;
 
   constructor() {
     super("Game");
     window.g = this;
     this.spatialHash = new SpatialHash<Fish>(100);
-    this.createBGAudioAndPlay();
   }
 
   createBGAudioAndPlay() {
@@ -175,6 +195,8 @@ export class Game extends Scene {
   }
 
   preload() {
+    this.createBGAudioAndPlay();
+
     this.load.spritesheet("spritesheet", "assets/tilemap/fishTilesheet.png", {
       frameWidth: 64,
       frameHeight: 64,
@@ -188,10 +210,6 @@ export class Game extends Scene {
     this.load.image("noiseSmall", "assets/noisesmall.png");
     this.load.image("waterOverlay", "assets/overlay.png");
 
-    // this.load.glsl("waterShader", "assets/shader/waterShader.glsl");
-
-    // this.textures.get('spritesheet').setFilter(Phaser.Textures.FilterMode.NEAREST);
-
     this.connectToWebSocket();
   }
 
@@ -202,7 +220,6 @@ export class Game extends Scene {
   }
 
   connectToWebSocket() {
-    // this.textures.get('tileset').setFilter(Phaser.Textures.FilterMode.NEAREST);
     this.wsConnection = new WebSocketConnection(
       "ws://" + getURLWithNoPortAndProtocol() + ":8080",
       (data: any) => {
@@ -219,7 +236,6 @@ export class Game extends Scene {
 
   whatToDoIfWebSocketDidntWork() {
     //  HAVING THE WIDTH AND HEIGHT I CAN CREATE THE BG AND THE OTHER ELEMENTS OF THE SCENE:
-
     this.putBG();
     this.loadTileMap();
     this.putPerlinNoiseOnTopOfBg();
@@ -266,9 +282,6 @@ export class Game extends Scene {
 
       this.ready = true;
 
-      //ADD FISH AND PLANTS:
-      // this.addABunchOfFishAtRandomPosition(null, this.level.numberOfFish, true);
-
       //ADD FISH FROM SOCKET'S LEVEL
       for (let i = 0; i < this.level.numberOfFish; i++) {
         this.addFishFromTheTileSet(
@@ -299,10 +312,9 @@ export class Game extends Scene {
   loadTileMap() {
     const map = this.make.tilemap({ key: "map" });
 
-    // Add the tileset image
-    const tileset = map.addTilesetImage("fishTilesheet", "tileset")!;
+    //load the tile map created with Tiled and add layers
 
-    // Create a layer from the tilemap
+    const tileset = map.addTilesetImage("fishTilesheet", "tileset")!;
     if (tileset) {
       this.sandLayer3 = map.createLayer("darker sand 2", tileset, 0, 0);
 
@@ -333,6 +345,7 @@ export class Game extends Scene {
   }
 
   createShader() {
+    //at least on my phone, the filters were not working, so for this example i'm not using them on mobile devices
     if (mobileCheck()) return;
     this.fx = this.camera.postFX.addDisplacement("noise", -0.1, -0.1);
   }
@@ -340,12 +353,9 @@ export class Game extends Scene {
   putListeners() {
     this.input.on("pointerdown", (e: any) => {
       let x = e.event.screenX || e.downX;
-      let y = e.event.screenY || e.downY;
-
-      // const actualWidth =this.game.scale.displayScale.x * window.innerWidth;
+      // let y = e.event.screenY || e.downY;
       const actualWidth = window.innerWidth;
 
-      console.log(e);
       if (x > actualWidth * 0.8) {
         this.scrollX += 250;
       } else if (x < actualWidth * 0.2) {
@@ -358,7 +368,7 @@ export class Game extends Scene {
       if (this.scrollX > this.cameraLimitMaxX)
         this.scrollX = this.cameraLimitMaxX;
 
-      this.emitBubbles(e.worldX - 300, e.worldY - 300,10);
+      this.emitBubbles(e.worldX - 300, e.worldY - 300, 10);
     });
 
     window.onresize = () => {
@@ -367,22 +377,12 @@ export class Game extends Scene {
   }
 
   emitBubbles(x: number, y: number, numberOfBubble: number = 1): void {
-    // this.particleEmitter.x = x + this.scrollX;
-    // this.particleEmitter.y = y;
-    // this.particleEmitter.visible = true;
-    // const scale = this.game.scale.displayScale.x;
-    // const x = e.event.screenX;
-    // const y = e.event.screenY;
     this.particleEmitter.emitParticleAt(x, y, numberOfBubble);
-    // setTimeout(() => this.particleEmitter.stop(), 500);
   }
 
   create() {
-    console.log("#game.create()");
-
     this.camera = this.cameras.main;
 
-    // this.camera.setScroll(500,0)
     this.camera.setBackgroundColor(0x000000);
 
     this.createContainerForFurtherAwayFish();
@@ -434,7 +434,7 @@ export class Game extends Scene {
     this.waterNoise.tileScaleY = 4;
     this.waterNoise.blendMode = Phaser.BlendModes.MULTIPLY;
     this.waterNoise.alpha = 0.22;
-    this.waterNoise.depth = 1;
+    this.waterNoise.depth = 6;
 
     this.waterNoise2 = this.add.tileSprite(
       0,
@@ -487,37 +487,83 @@ export class Game extends Scene {
 
   putBG() {
     // Create a canvas texture
-    const gradientTexture = this.textures.createCanvas(
+    this.gradientTexture = this.textures.createCanvas(
       "gradient",
       this.worldWidth,
       this.worldHeight
     );
 
     // Get the canvas context
-    const ctx = gradientTexture!.getContext()!;
+    this.ctx = this.gradientTexture!.getContext();
+
+    // Initialize gradient colors for day-night cycle
+    this.dayColor = { r: 151, g: 222, b: 251 }; // Light blue
+    this.nightColor = { r: 0, g: 0, b: 129 }; // Dark blue
+
+    // Draw the initial gradient
+    this.updateGradient();
+  }
+
+  updateGradient() {
+    // Interpolate between day and night colors
+
+    const topColor = `rgb(${Math.round(
+      interpolate(this.dayColor.r, this.nightColor.r, this.timeOfDay)
+    )}, ${Math.round(
+      interpolate(this.dayColor.g, this.nightColor.g, this.timeOfDay)
+    )}, ${Math.round(
+      interpolate(this.dayColor.b, this.nightColor.b, this.timeOfDay)
+    )})`;
+
+    const bottomColor = `rgb(${Math.round(
+      interpolate(this.nightColor.r, this.dayColor.r * 0.66, this.timeOfDay)
+    )}, ${Math.round(
+      interpolate(this.nightColor.g, this.dayColor.g * 0.66, this.timeOfDay)
+    )}, ${Math.round(
+      interpolate(this.nightColor.b, this.dayColor.b * 0.66, this.timeOfDay)
+    )})`;
 
     // Create a linear gradient
-    const gradient = ctx.createLinearGradient(0, 0, 0, this.worldHeight);
-    gradient.addColorStop(0, "#97dEfB"); // Light blue
-    gradient.addColorStop(1, "#00008B"); // Dark blue
+    const gradient = this.ctx.createLinearGradient(0, 0, 0, this.worldHeight);
+    gradient.addColorStop(0, topColor);
+    gradient.addColorStop(1, bottomColor);
 
     // Fill the canvas with the gradient
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, this.worldWidth, this.worldHeight);
+    this.ctx.fillStyle = gradient;
+    this.ctx.fillRect(0, 0, this.worldWidth, this.worldHeight);
 
     // Refresh the texture to apply the gradient
-    gradientTexture?.refresh();
+    this.gradientTexture!.refresh();
 
-    // Add the gradient as an image
-    this.bg = this.add.image(0, 0, "gradient");
-    this.bg.setOrigin(0);
-    this.bg.setScrollFactor(0, 1);
+    // Add the gradient as an image if it hasn't been added yet
+    if (!this.bg) {
+      this.bg = this.add.image(0, 0, "gradient");
+      this.bg.setOrigin(0);
+      this.bg.setScrollFactor(0, 1);
+    }
   }
-  update(time: number) {
+
+  updateDayNightCycle(time: number = 0) {
+    const dayNightSpeed = 0.0005;
+    this.timeOfDay = Math.sin(dayNightSpeed * (time + 2000)) * 0.5 + 0.5;
+
+    //BY SETTING A BLACK TINT ON THE WATERNOISE, I CAN MAKE EVERYTHING SLIGHTLY DARKER
+    this.waterNoise.setTint(getColorFromRange(1 - this.timeOfDay));
+    //SAME FOR THE FIRST LAYER OF SAND
+    this.sandLayer1!.setTint(getColorFromRange(1 - this.timeOfDay * 0.34));
+    this.sandLayer2!.setTint(getColorFromRange(1 - this.timeOfDay * 0.5));
+
+    // Update the gradient colors
+    this.updateGradient();
+  }
+  update(time: number, delta: number) {
+    //if the game is not ready, nothing updates yet
     if (!this.ready) return;
 
+    //clear the grid, each fish will update its position on every frame
     this.spatialHash.clear();
 
+    //lerp the position of the camera
     this.camera.setScroll(
       Phaser.Math.Interpolation.SmoothStep(
         0.166,
@@ -527,6 +573,7 @@ export class Game extends Scene {
       0
     );
 
+    //UPDATE EVERY ENTITIES THAT HAS TO BE UPDATED
     this.arrOfBGFish.forEach((fish) => {
       fish.update(time);
     });
@@ -539,7 +586,9 @@ export class Game extends Scene {
       plant.update(time);
     });
 
+    //WAVY EFFECT
     this.updateFilter();
+    this.updateDayNightCycle(time);
   }
 
   updateFilter() {

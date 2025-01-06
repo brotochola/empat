@@ -273,9 +273,7 @@ export class Fish extends Phaser.GameObjects.Sprite {
   }
 
   playSoundOnceAWhile() {
-    // if (Math.random() > 0.999) {
-    //   this.fishSoundManager.playSoundWithRandomPitch();
-    // }
+  
 
     if (Math.random() < 0.66) return;
 
